@@ -1,7 +1,8 @@
 -- Строитель локации «Деревня» для «Не разбуди Славика».
 -- Запуск: в Roblox Studio, режим редактирования (Command Bar или через MCP execute_luau).
 -- Строит Workspace.Map (имена и теги — по README «Своя локация») и террейн вокруг.
--- Меш-модели берутся из ServerStorage._MapAssetsStaging (берёзы, Нива, бочки — бесплатные из Creator Store).
+-- Меш-модели берутся из ServerStorage._MapAssetsStaging (берёзы, трактор МТЗ, кот, яблоня, бочки — бесплатные
+-- из Creator Store, скрипты из них удалены). Референсы: docs/concept.png и docs/refs/*.jpg.
 -- Если их нет — вместо них ставятся простые заглушки из деталей.
 -- Повторный запуск удаляет старый Workspace.Map и строит заново.
 
@@ -19,7 +20,8 @@ local DARK_WOOD = Color3.fromRGB(58, 44, 33)
 local BLUE_DOOR = Color3.fromRGB(88, 132, 140)
 local BROWN_DOOR = Color3.fromRGB(96, 64, 40)
 local WHITE_PAINT = Color3.fromRGB(196, 196, 186)
-local ROOF = Color3.fromRGB(66, 60, 56)
+local ROOF = Color3.fromRGB(74, 78, 60) -- старый шифер во мху
+local GREEN_SIDING = Color3.fromRGB(150, 178, 156) -- светло-зелёная обшивка левой половины (house_front.jpg)
 local GLASS = Color3.fromRGB(150, 170, 175)
 local LEAF = Color3.fromRGB(44, 62, 34)
 local WARM = Color3.fromRGB(255, 196, 120)
@@ -274,11 +276,17 @@ fill(Vector3.new(-18, -3, 90), Vector3.new(6, 2, 18), Enum.Material.Mud)
 fill(Vector3.new(-20, -3, 58), Vector3.new(16, 2, 6), Enum.Material.LeafyGrass)
 fill(Vector3.new(-40, -3, 70), Vector3.new(20, 2, 40), Enum.Material.LeafyGrass)
 fill(Vector3.new(0, -3, -78), Vector3.new(76, 2, 32), Enum.Material.LeafyGrass)
+fill(Vector3.new(-15, -3, 96), Vector3.new(74, 2, 19), Enum.Material.LeafyGrass) -- огород
+fill(Vector3.new(67, -3, 10), Vector3.new(9, 2, 250), Enum.Material.Mud) -- дорога за правым забором
+fill(Vector3.new(52, -3, 92), Vector3.new(16, 2, 18), Enum.Material.Mud) -- у ворот и трактора
+fill(Vector3.new(0, -3, 125), Vector3.new(110, 2, 30), Enum.Material.LeafyGrass) -- соседская сторона
 -- холмы за забором (лес вдали)
 for i = 1, 14 do
 	local a = (i / 14) * math.pi * 2
 	local r = rng:NextNumber(150, 190)
-	T:FillBall(O + Vector3.new(math.cos(a) * r, -18, math.sin(a) * r), rng:NextNumber(30, 45), Enum.Material.Grass)
+	if math.sin(a) < 0.35 then -- на соседской стороне (за огородом) холмов нет
+		T:FillBall(O + Vector3.new(math.cos(a) * r, -18, math.sin(a) * r), rng:NextNumber(30, 45), Enum.Material.Grass)
+	end
 end
 pcall(function()
 	T.Decoration = true -- шевелящаяся трава
@@ -381,7 +389,7 @@ wallX(house, -26, 0, 64, WALL_H, T_W, {
 	{ -21, 4, WIN[1], WIN[2] },
 	{ -13, 5, DOOR[1], DOOR[2] },
 	{ -5, 4, WIN[1], WIN[2] },
-}, GREY_WOOD)
+}, GREEN_SIDING)
 wallX(house, 0, 26, 64, WALL_H, T_W, {
 	{ 10, 5, DOOR[1], DOOR[2] },
 	{ 19, 4, WIN[1], WIN[2] },
@@ -390,12 +398,12 @@ wallX(house, 0, 26, 64, WALL_H, T_W, {
 wallX(house, -26, 0, 80, WALL_H, T_W, {
 	{ -18, 5, DOOR[1], DOOR[2] },
 	{ -6, 4, WIN[1], WIN[2] },
-}, GREY_WOOD)
+}, GREEN_SIDING)
 wallX(house, 0, 26, 80, WALL_H, T_W, {
 	{ 16, 4, WIN[1], WIN[2] },
 }, OLD_WOOD)
 -- торцы
-wallZ(house, 64.4, 79.6, -26, WALL_H, T_W, { { 72, 4, WIN[1], WIN[2] } }, GREY_WOOD)
+wallZ(house, 64.4, 79.6, -26, WALL_H, T_W, { { 72, 4, WIN[1], WIN[2] } }, GREEN_SIDING)
 wallZ(house, 64.4, 79.6, 26, WALL_H, T_W, { { 72, 4, WIN[1], WIN[2] } }, OLD_WOOD)
 -- перегородка между семьями
 wallZ(house, 64.4, 79.6, 0, WALL_H, 0.5, { { 72, 5, DOOR[1], DOOR[2] } }, Color3.fromRGB(120, 100, 80))
@@ -436,16 +444,16 @@ end
 P(house, "RoofRidge", Vector3.new(55.5, 0.6, 0.9), CFrame.new(0, WALL_H + 0.4 + rise + 0.2, 72), DARK_WOOD)
 -- фронтоны
 for _, x in { -26, 26 } do
-	W(house, "Gable", Vector3.new(0.8, rise, run), CFrame.new(x, WALL_H + 0.4 + rise / 2, 72 - run / 2), x < 0 and GREY_WOOD or OLD_WOOD)
-	W(house, "Gable", Vector3.new(0.8, rise, run), CFrame.new(x, WALL_H + 0.4 + rise / 2, 72 + run / 2) * CFrame.Angles(0, math.rad(180), 0), x < 0 and GREY_WOOD or OLD_WOOD)
+	W(house, "Gable", Vector3.new(0.8, rise, run), CFrame.new(x, WALL_H + 0.4 + rise / 2, 72 - run / 2), x < 0 and GREEN_SIDING or OLD_WOOD)
+	W(house, "Gable", Vector3.new(0.8, rise, run), CFrame.new(x, WALL_H + 0.4 + rise / 2, 72 + run / 2) * CFrame.Angles(0, math.rad(180), 0), x < 0 and GREEN_SIDING or OLD_WOOD)
 end
 -- труба печи
 P(house, "Chimney", Vector3.new(2.2, 6, 2.2), CFrame.new(-3, WALL_H + 4, 75), Color3.fromRGB(120, 70, 55), Enum.Material.Brick)
 
 -- Двери (в закрытом положении; в игре стартуют открытыми)
 door(house, "FrontDoorBlue", CFrame.new(-13, 4.3, 64), BLUE_DOOR, 100)
-door(house, "FrontDoorBrown", CFrame.new(10, 4.3, 64), BROWN_DOOR, 100)
-door(house, "InnerDoor", CFrame.new(0, 4.3, 72) * CFrame.Angles(0, math.rad(90), 0), Color3.fromRGB(110, 86, 62), 50)
+door(house, "FrontDoorBrown", CFrame.new(10, 4.3, 64), Color3.fromRGB(168, 120, 70), 100) -- светлая филёнчатая
+door(house, "InnerDoor", CFrame.new(0, 4.3, 72) * CFrame.Angles(0, math.rad(90), 0), Color3.fromRGB(104, 38, 34), 50) -- тёмно-красная (kitchen.jpg)
 door(house, "BackDoor", CFrame.new(-18, 4.3, 80), Color3.fromRGB(80, 60, 44), 100)
 -- наличники дверей
 for _, xc in { -13, 10 } do
@@ -453,8 +461,42 @@ for _, xc in { -13, 10 } do
 	P(house, "DoorFrame", Vector3.new(0.4, 8.4, 1.0), CFrame.new(xc - 2.7, 4.2, 64), c)
 	P(house, "DoorFrame", Vector3.new(0.4, 8.4, 1.0), CFrame.new(xc + 2.7, 4.2, 64), c)
 	P(house, "DoorFrame", Vector3.new(5.8, 0.4, 1.0), CFrame.new(xc, 8.4, 64), c)
-	P(house, "Step", Vector3.new(6, 0.4, 2), CFrame.new(xc, 0.2, 62.6), Color3.fromRGB(100, 96, 90), Enum.Material.Concrete)
+	if xc < 0 then
+		P(house, "Step", Vector3.new(6, 0.4, 2), CFrame.new(xc, 0.2, 62.6), Color3.fromRGB(100, 96, 90), Enum.Material.Concrete)
+	else
+		P(house, "Step", Vector3.new(4.4, 0.35, 1.4), CFrame.new(xc, 0.18, 62.9), Color3.fromRGB(120, 92, 62), Enum.Material.Wood)
+		-- тротуарная плитка у порога (cat_porch.jpg), вровень с землёй
+		for ix = -2, 2 do
+			for iz = 0, 2 do
+				local tile = P(house, "PavingTile", Vector3.new(1.4, 0.1, 0.9), CFrame.new(xc + ix * 1.5 + (iz % 2) * 0.5, 0.05, 61.6 - iz * 1.0) * CFrame.Angles(0, math.rad(rng:NextNumber(-4, 4)), 0), Color3.fromRGB(120, 116, 104):Lerp(Color3.fromRGB(90, 100, 80), rng:NextNumber(0, 0.5)), Enum.Material.Pavement)
+				tile.CanCollide = false
+			end
+		end
+	end
 end
+-- занавеска в разбитом окне
+local curtain = P(house, "Curtain", Vector3.new(3.6, 3.2, 0.08), CFrame.new(19, 5.6, 64.6), Color3.fromRGB(235, 235, 228), Enum.Material.Fabric)
+curtain.Transparency = 0.15
+curtain.CanCollide = false
+-- веранда левой половины: навес на столбах и белые резные доски-«фестоны» (house_front.jpg)
+local veranda = folder("Veranda", house)
+P(veranda, "VerandaRoof", Vector3.new(26, 0.4, 5), CFrame.new(-13.5, 9.6, 61.8) * CFrame.Angles(math.rad(-8), 0, 0), ROOF, Enum.Material.Slate)
+P(veranda, "VerandaBeam", Vector3.new(26, 0.6, 0.5), CFrame.new(-13.5, 8.9, 59.8), WHITE_PAINT, Enum.Material.WoodPlanks)
+for _, x in { -25.6, -17.4, -8.6, -1.2 } do
+	P(veranda, "VerandaPost", Vector3.new(0.5, 8.9, 0.5), CFrame.new(x, 4.45, 59.8), WHITE_PAINT, Enum.Material.Wood)
+end
+do
+	local x = -26.2
+	local i = 0
+	while x < -0.8 do
+		local len = if i % 2 == 0 then 1.9 else 1.3
+		local f = P(veranda, "Festoon", Vector3.new(0.75, len, 0.12), CFrame.new(x, 8.6 - len / 2, 59.65), WHITE_PAINT, Enum.Material.WoodPlanks)
+		f.CanCollide = false
+		x += 0.95
+		i += 1
+	end
+end
+P(veranda, "Railing", Vector3.new(7, 0.25, 0.25), CFrame.new(-21.5, 3.1, 59.8), WHITE_PAINT, Enum.Material.Wood)
 -- фонарь над коричневой дверью
 local lampBox = P(house, "DoorLamp", Vector3.new(0.9, 1.1, 0.9), CFrame.new(13.4, 8.6, 63.2), Color3.fromRGB(255, 214, 150), Enum.Material.Neon)
 lampBox.CanCollide = false
@@ -497,6 +539,30 @@ for _, off in { Vector3.new(-1.7, 0, -1), Vector3.new(1.7, 0, -1), Vector3.new(-
 end
 P(inside, "Sofa", Vector3.new(7, 2, 3), CFrame.new(18, 1.4, 66.3), Color3.fromRGB(80, 66, 50), Enum.Material.Fabric)
 P(inside, "Shelf", Vector3.new(5, 6, 1.2), CFrame.new(7, 3.4, 79), DARK_WOOD, Enum.Material.Wood)
+-- кухня (kitchen.jpg): белая газовая плита с полотенцем, кастрюли, клеёнка в горошек, оранжевый таз, табурет
+local kitchen = folder("Kitchen", inside)
+P(kitchen, "GasStove", Vector3.new(2.6, 3, 2.3), CFrame.new(24.4, 1.9, 75.3), Color3.fromRGB(232, 232, 226), Enum.Material.SmoothPlastic)
+P(kitchen, "OvenGlass", Vector3.new(1.8, 1.2, 0.05), CFrame.new(24.4, 1.6, 74.12), Color3.fromRGB(30, 30, 32), Enum.Material.Glass)
+local towel = P(kitchen, "Towel", Vector3.new(0.7, 1.3, 0.06), CFrame.new(23.9, 2.3, 74.08), Color3.fromRGB(210, 120, 150), Enum.Material.Fabric)
+towel.CanCollide = false
+for i, off in { Vector3.new(-0.6, 0, -0.4), Vector3.new(0.6, 0, 0.4) } do
+	P(kitchen, "Pot", Vector3.new(0.9, 1.1, 1.1), CFrame.new(Vector3.new(24.4, 3.85, 75.3) + off) * CFrame.Angles(0, 0, math.rad(90)), if i == 1 then Color3.fromRGB(170, 160, 140) else Color3.fromRGB(40, 40, 42), Enum.Material.Metal, Enum.PartType.Cylinder)
+end
+local cloth = P(kitchen, "TableCloth", Vector3.new(4.4, 0.08, 3), CFrame.new(8, 3.2, 68), Color3.fromRGB(176, 170, 128), Enum.Material.Fabric)
+for ix = -2, 2 do
+	for iz = -1, 1 do
+		local dot = P(kitchen, "PolkaDot", Vector3.new(0.05, 0.35, 0.35), CFrame.new(8 + ix * 0.85, 3.25, 68 + iz * 0.9) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(226, 222, 196), Enum.Material.SmoothPlastic, Enum.PartType.Cylinder)
+		dot.CanCollide = false
+	end
+end
+P(kitchen, "Basin", Vector3.new(0.7, 2, 2), CFrame.new(7.2, 3.6, 68.3) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(235, 120, 40), Enum.Material.Plastic, Enum.PartType.Cylinder)
+P(kitchen, "Stool", Vector3.new(1.6, 0.25, 1.6), CFrame.new(21.5, 2, 72.5), Color3.fromRGB(150, 90, 50), Enum.Material.Wood)
+for _, off in { Vector3.new(-0.6, 0, -0.6), Vector3.new(0.6, 0, -0.6), Vector3.new(-0.6, 0, 0.6), Vector3.new(0.6, 0, 0.6) } do
+	P(kitchen, "StoolLeg", Vector3.new(0.18, 1.9, 0.18), CFrame.new(Vector3.new(21.5, 0.95, 72.5) + off), Color3.fromRGB(150, 90, 50), Enum.Material.Wood)
+end
+for i = 0, 1 do
+	P(kitchen, "Socket", Vector3.new(0.5, 0.5, 0.1), CFrame.new(16 + i * 0.6, 3.6, 79.55), Color3.fromRGB(235, 235, 230), Enum.Material.SmoothPlastic)
+end
 -- шкафы, где можно спрятаться (выход — передняя грань, -Z)
 local c1 = P(inside, "ClosetLeft", Vector3.new(4, 7, 2.5), CFrame.new(-10, 3.9, 78.35), Color3.fromRGB(74, 54, 38), Enum.Material.Wood)
 CS:AddTag(c1, "SlavikCloset")
@@ -585,45 +651,72 @@ task.wait()
 -- 5) ДЕРЕВЯННЫЙ ЗАБОР по периметру двора (старый, кривой, местами без досок)
 -- ===================================================================
 local fence = folder("WoodFence")
-local function fenceLine(a: Vector3, b: Vector3)
+-- gaps = { {от, до} } — проёмы (в стадах от начала линии), h = высота досок
+local function fenceLine(a: Vector3, b: Vector3, gaps: { { number } }?, h: number?)
+	local H = h or 5
 	local dir = (b - a)
 	local len = dir.Magnitude
 	local unit = dir.Unit
 	local yaw = math.atan2(-unit.Z, unit.X)
-	-- поперечины
-	for _, y in { 1.2, 3.8 } do
-		local mid = (a + b) / 2
-		P(fence, "Rail", Vector3.new(len, 0.35, 0.3), CFrame.new(mid.X, y, mid.Z) * CFrame.Angles(0, yaw, 0), DARK_WOOD, Enum.Material.Wood)
-	end
-	-- столбы
-	local n = math.floor(len / 8)
-	for i = 0, n do
-		local p = a + unit * (i * len / math.max(n, 1))
-		P(fence, "Post", Vector3.new(0.6, 5.6, 0.6), CFrame.new(p.X, 2.8, p.Z) * CFrame.Angles(0, yaw, 0), DARK_WOOD, Enum.Material.Wood)
-	end
-	-- доски
-	local s = 0.6
-	while s < len - 0.4 do
-		if rng:NextNumber() > 0.06 then -- иногда доски нет
-			local p = a + unit * s
-			local h = rng:NextNumber(4.4, 5.4)
-			local tilt = if rng:NextNumber() < 0.08 then rng:NextNumber(-14, 14) else rng:NextNumber(-2, 2)
-			P(fence, "Plank", Vector3.new(0.9, h, 0.15), CFrame.new(p.X, h / 2, p.Z) * CFrame.Angles(0, yaw, 0) * CFrame.new(0, 0, 0.25) * CFrame.Angles(0, 0, math.rad(tilt)), GREY_WOOD:Lerp(OLD_WOOD, rng:NextNumber()), Enum.Material.WoodPlanks)
+	-- куски забора между проёмами
+	local pieces: { { number } } = {}
+	local cur = 0
+	local sorted = table.clone(gaps or {})
+	table.sort(sorted, function(x, y)
+		return x[1] < y[1]
+	end)
+	for _, g in sorted do
+		if g[1] > cur then
+			table.insert(pieces, { cur, g[1] })
 		end
-		s += 1.25
+		cur = g[2]
+	end
+	if cur < len then
+		table.insert(pieces, { cur, len })
+	end
+	for _, piece in pieces do
+		local s0, s1 = piece[1], piece[2]
+		local plen = s1 - s0
+		local mid = a + unit * ((s0 + s1) / 2)
+		for _, y in { H * 0.24, H * 0.76 } do
+			P(fence, "Rail", Vector3.new(plen, 0.35, 0.3), CFrame.new(mid.X, y, mid.Z) * CFrame.Angles(0, yaw, 0), DARK_WOOD, Enum.Material.Wood)
+		end
+		local n = math.max(1, math.floor(plen / 8))
+		for i = 0, n do
+			local p = a + unit * (s0 + i * plen / n)
+			P(fence, "Post", Vector3.new(0.6, H + 0.6, 0.6), CFrame.new(p.X, (H + 0.6) / 2, p.Z) * CFrame.Angles(0, yaw, 0), DARK_WOOD, Enum.Material.Wood)
+		end
+		local d = s0 + 0.6
+		while d < s1 - 0.4 do
+			if rng:NextNumber() > 0.06 then -- иногда доски нет
+				local p = a + unit * d
+				local ph = rng:NextNumber(H * 0.88, H * 1.08)
+				local tilt = if rng:NextNumber() < 0.08 then rng:NextNumber(-14, 14) else rng:NextNumber(-2, 2)
+				P(fence, "Plank", Vector3.new(0.9, ph, 0.15), CFrame.new(p.X, ph / 2, p.Z) * CFrame.Angles(0, yaw, 0) * CFrame.new(0, 0, 0.25) * CFrame.Angles(0, 0, math.rad(tilt)), GREY_WOOD:Lerp(OLD_WOOD, rng:NextNumber()), Enum.Material.WoodPlanks)
+			end
+			d += 1.25
+		end
 	end
 end
 fenceLine(Vector3.new(-52, 0, -100), Vector3.new(-52, 0, 106))
 task.wait()
-fenceLine(Vector3.new(58, 0, -100), Vector3.new(58, 0, 106))
+-- правый забор: ворота к дороге у трактора (z 84..100)
+fenceLine(Vector3.new(58, 0, -100), Vector3.new(58, 0, 106), { { 184, 200 } })
 task.wait()
-fenceLine(Vector3.new(-52, 0, 106), Vector3.new(58, 0, 106))
+-- задний забор: дыра на соседскую сторону (x -41..-35)
+fenceLine(Vector3.new(-52, 0, 106), Vector3.new(58, 0, 106), { { 11, 17 } })
 task.wait()
 fenceLine(Vector3.new(-52, 0, -100), Vector3.new(58, 0, -100))
 task.wait()
+-- распахнутые створки ворот (наружу, к дороге)
+for _, info in { { 84, 10 }, { 100, -10 } } do -- створки вдоль дороги, проезд свободен
+	local z = info[1]
+	local leaf = P(fence, "GateLeaf", Vector3.new(7.6, 4.6, 0.3), CFrame.new(58, 2.6, z) * CFrame.Angles(0, math.rad(info[2]), 0) * CFrame.new(3.8, 0, 0), GREY_WOOD, Enum.Material.WoodPlanks)
+	leaf.Name = "GateLeaf"
+end
 
 -- ===================================================================
--- 6) МЕШ-МОДЕЛИ: берёзы, Нива, бочки
+-- 6) МЕШ-МОДЕЛИ: берёзы, трактор, огород, соседи, кот, бочки
 -- ===================================================================
 local nature = folder("Trees")
 local birchPack = ASSETS and ASSETS:FindFirstChild("BirchPack")
@@ -696,9 +789,9 @@ if bigBirch then
 end
 -- берёзы и лес за забором
 local spots = {
-	{ -46, 90 }, { -44, 40 }, { -47, -20 }, { -46, -70 }, { 52, 92 }, { 53, 30 }, { 52, -40 }, { 20, 100 }, { -30, 101 },
-	{ -70, 20 }, { -75, 80 }, { -68, -60 }, { 75, 60 }, { 80, -20 }, { 72, -85 }, { 0, -120 }, { -40, -118 }, { 40, -125 },
-	{ 10, 125 }, { -45, 128 }, { 50, 122 }, { -90, -10 }, { 95, 20 },
+	{ -47, 82 }, { -44, 40 }, { -47, -20 }, { -46, -70 }, { 53, 30 }, { 52, -40 },
+	{ -70, 20 }, { -75, 80 }, { -68, -60 }, { 80, 60 }, { 82, -20 }, { 72, -85 }, { 0, -120 }, { -40, -118 }, { 40, -125 },
+	{ -62, 128 }, { 55, 130 }, { -90, -10 }, { 95, 20 },
 }
 for i, s in spots do
 	birch(i, Vector3.new(s[1], -0.3, s[2]), rng:NextNumber(0, 360), rng:NextNumber(1.1, 1.6))
@@ -707,24 +800,157 @@ for i, s in spots do
 	end
 end
 
--- Нива за домом
-local car = folder("Car")
-local niva = placeAsset("Niva", car, Vector3.new(-16, 0, 95), 75, 1)
+-- Трактор МТЗ сбоку участка, у ворот рядом с сараем (носом к воротам)
+local tractorFolder = folder("Tractor")
 local escapeCar: BasePart
-if niva then
-	niva.Name = "Niva"
-	-- главная деталь = самый большой меш (кузов)
-	local best: BasePart? = nil
-	for _, d in niva:GetDescendants() do
-		if d:IsA("BasePart") and (not best or d.Size.Magnitude > best.Size.Magnitude) then
-			best = d
+local tractor = placeAsset("Tractor", tractorFolder, Vector3.new(46, 0, 92), 0, 0.7)
+if tractor then
+	tractor.Name = "MTZ"
+	local body = tractor:FindFirstChild("MTZ82", true)
+	-- плуг сзади: направление «плуг -> кабина» = вперёд; разворачиваем вперёд к воротам (+X)
+	local sum, n = Vector3.zero, 0
+	for _, d in tractor:GetDescendants() do
+		if d:IsA("BasePart") and (d.Name:find("Skiba") or d.Name:find("Resor")) then
+			sum += d.Position
+			n += 1
 		end
 	end
-	escapeCar = best :: BasePart
-	escapeCar.Name = "EscapeCar"
+	if body and body:IsA("BasePart") and n > 0 then
+		local f = body.Position - sum / n
+		local mn, mx = worldBox(tractor)
+		rotateAround(tractor, (mn + mx) / 2, CFrame.Angles(0, math.atan2(f.Z, f.X), 0))
+		settle(tractor, Vector3.new(46, 0, 92))
+	end
+	for _, d in tractor:GetDescendants() do
+		if d:IsA("Seat") or d:IsA("VehicleSeat") then
+			d.Disabled = true
+		end
+	end
+	if body and body:IsA("BasePart") then
+		escapeCar = body
+	else
+		local best: BasePart? = nil
+		for _, d in tractor:GetDescendants() do
+			if d:IsA("BasePart") and (not best or d.Size.Magnitude > best.Size.Magnitude) then
+				best = d
+			end
+		end
+		escapeCar = best :: BasePart
+	end
 else
-	escapeCar = P(car, "EscapeCar", Vector3.new(6, 3.5, 11), CFrame.new(-16, 2.3, 95), Color3.fromRGB(70, 90, 60), Enum.Material.Metal)
+	escapeCar = P(tractorFolder, "EscapeCar", Vector3.new(12, 7, 7), CFrame.new(46, 3.5, 92), Color3.fromRGB(40, 70, 140), Enum.Material.Metal)
 end
+escapeCar.Name = "EscapeCar"
+
+-- ===== ОГОРОД за домом (garden.jpg): x -52..22, z 87..106 =====
+local garden = folder("Garden")
+local GARDEN_FENCE_H = 3.6
+-- низкий забор: калитка напротив задней двери (x -22..-14), пролом сбоку (z 95..100)
+fenceLine(Vector3.new(-52, 0, 87), Vector3.new(22, 0, 87), { { 30, 38 } }, GARDEN_FENCE_H)
+fenceLine(Vector3.new(22, 0, 87), Vector3.new(22, 0, 106), { { 8, 13 } }, GARDEN_FENCE_H)
+-- приоткрытая калитка
+P(garden, "Wicket", Vector3.new(3.6, 3.2, 0.25), CFrame.new(-22, 1.7, 87) * CFrame.Angles(0, math.rad(60), 0) * CFrame.new(1.8, 0, 0), GREY_WOOD, Enum.Material.WoodPlanks)
+-- грядки (земля, рядами ботва/капуста)
+for _, z in { 91, 95, 99 } do
+	P(garden, "Bed", Vector3.new(17, 0.45, 2.4), CFrame.new(-37, 0.2, z), Color3.fromRGB(62, 48, 36), Enum.Material.Mud)
+	for x = -44.5, -29.5, 1.5 do
+		local leafy = P(garden, "Plant", Vector3.new(0.9, 0.7, 0.9), CFrame.new(x + rng:NextNumber(-0.2, 0.2), 0.75, z + rng:NextNumber(-0.5, 0.5)), Color3.fromRGB(70, 104, 52):Lerp(Color3.fromRGB(120, 140, 70), rng:NextNumber(0, 0.4)), Enum.Material.LeafyGrass, Enum.PartType.Ball)
+		leafy.CanCollide = false
+	end
+end
+-- высокая трава кочками
+local function grassClump(pos: Vector3)
+	for i = 1, 3 do
+		local h = rng:NextNumber(2.2, 4.2)
+		local blade = P(garden, "TallGrass", Vector3.new(0.9, h, 0.15), CFrame.new(pos + Vector3.new(rng:NextNumber(-0.5, 0.5), h / 2, rng:NextNumber(-0.5, 0.5))) * CFrame.Angles(math.rad(rng:NextNumber(-12, 12)), rng:NextNumber(0, 6.28), math.rad(rng:NextNumber(-12, 12))), Color3.fromRGB(78, 104, 50):Lerp(Color3.fromRGB(128, 132, 70), rng:NextNumber()), Enum.Material.Grass)
+		blade.CanCollide = false
+		blade.CastShadow = false
+	end
+end
+local placed = 0
+while placed < 55 do
+	local x, z = rng:NextNumber(-50, 20), rng:NextNumber(88.5, 104.5)
+	local onBed = x > -46.5 and x < -27.5 and z > 89 and z < 101
+	local onPath = x > -22 and x < -14
+	if not onBed and not onPath then
+		grassClump(Vector3.new(x, 0, z))
+		placed += 1
+	end
+end
+-- кусты смородины/малины с ягодами
+local function berryBush(pos: Vector3, berry: Color3)
+	local r = rng:NextNumber(1.6, 2.3)
+	local b = P(garden, "BerryBush", Vector3.new(r * 2, r * 1.5, r * 2), CFrame.new(pos + Vector3.new(0, r * 0.6, 0)), LEAF:Lerp(Color3.fromRGB(64, 92, 40), rng:NextNumber()), Enum.Material.LeafyGrass, Enum.PartType.Ball)
+	b.CanCollide = false
+	for i = 1, 9 do
+		local a = rng:NextNumber(0, 6.28)
+		local y = rng:NextNumber(0.2, r * 1.1)
+		local berryPart = P(garden, "Berry", Vector3.new(0.32, 0.32, 0.32), CFrame.new(pos + Vector3.new(math.cos(a) * r * 0.95, y, math.sin(a) * r * 0.95)), berry, Enum.Material.SmoothPlastic, Enum.PartType.Ball)
+		berryPart.CanCollide = false
+	end
+end
+for i, pos in { Vector3.new(-49, 0, 90), Vector3.new(-49, 0, 97), Vector3.new(-49, 0, 103), Vector3.new(19, 0, 90), Vector3.new(16, 0, 103), Vector3.new(-26, 0, 103.5) } do
+	berryBush(pos, if i % 2 == 0 then Color3.fromRGB(170, 20, 30) else Color3.fromRGB(40, 16, 40))
+end
+-- яблони
+local appleSrc = ASSETS and ASSETS:FindFirstChild("AppleTree")
+for _, info in { { -4, 95, 20 }, { 10, 100, 140 }, { -10, 103, 260 } } do
+	local pos = Vector3.new(info[1], 0, info[2])
+	local tree = placeAsset("AppleTree", garden, pos, info[3], 0.45)
+	if tree then
+		tree.Name = "AppleTree"
+		for _, d in tree:GetDescendants() do
+			if d:IsA("BasePart") then
+				d.CanCollide = false
+			end
+		end
+	else
+		P(garden, "AppleCrown", Vector3.new(9, 7, 9), CFrame.new(pos + Vector3.new(0, 8, 0)), LEAF, Enum.Material.LeafyGrass, Enum.PartType.Ball).CanCollide = false
+	end
+	local trunk = P(garden, "AppleTrunk", Vector3.new(1.1, 6, 1.1), CFrame.new(pos + Vector3.new(0, 3, 0)), Color3.fromRGB(70, 56, 44), Enum.Material.Wood)
+	trunk.Transparency = if appleSrc then 1 else 0
+end
+-- старые доски и ведро в огороде
+P(garden, "PlankPile", Vector3.new(7, 0.6, 2), CFrame.new(-8, 0.3, 90) * CFrame.Angles(0, 0.3, 0), OLD_WOOD)
+P(garden, "Bucket", Vector3.new(1.2, 1.4, 1.4), CFrame.new(-25, 0.6, 92) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(110, 110, 105), Enum.Material.CorrodedMetal, Enum.PartType.Cylinder)
+
+-- ===== СОСЕДИ за задним забором: дома с красной и зелёной металлической крышей, серый сарай =====
+local neighbors = folder("Neighbors")
+local function neighborHouse(c: Vector3, w: number, d: number, wallColor: Color3, roofColor: Color3, wallH: number)
+	P(neighbors, "NWall", Vector3.new(w, wallH, d), CFrame.new(c + Vector3.new(0, wallH / 2, 0)), wallColor, Enum.Material.WoodPlanks)
+	local rise = d * 0.35
+	local ang = math.atan(rise / (d / 2))
+	local slab = (d / 2 + 1) / math.cos(ang)
+	for _, sgn in { -1, 1 } do
+		local mid = (d / 2 + 1) / 2
+		P(neighbors, "NRoof", Vector3.new(w + 2, 0.3, slab), CFrame.new(c + Vector3.new(0, wallH + rise - math.tan(ang) * mid, sgn * mid)) * CFrame.Angles(sgn * ang, 0, 0), roofColor, Enum.Material.CorrodedMetal)
+	end
+	for _, sx in { -1, 1 } do
+		W(neighbors, "NGable", Vector3.new(0.4, rise, d / 2), CFrame.new(c + Vector3.new(sx * w / 2, wallH + rise / 2, -d / 4)), wallColor, Enum.Material.WoodPlanks)
+		W(neighbors, "NGable", Vector3.new(0.4, rise, d / 2), CFrame.new(c + Vector3.new(sx * w / 2, wallH + rise / 2, d / 4)) * CFrame.Angles(0, math.rad(180), 0), wallColor, Enum.Material.WoodPlanks)
+	end
+	for i = -1, 1 do
+		local win = P(neighbors, "NWindow", Vector3.new(2.4, 2.8, 0.2), CFrame.new(c + Vector3.new(i * w / 3.2, wallH * 0.55, -d / 2 - 0.05)), Color3.fromRGB(28, 30, 34), Enum.Material.Glass)
+		win.CanCollide = false
+	end
+end
+neighborHouse(Vector3.new(-26, 0, 132), 22, 13, Color3.fromRGB(140, 130, 112), Color3.fromRGB(150, 40, 36), 9) -- красная крыша
+neighborHouse(Vector3.new(18, 0, 136), 20, 12, Color3.fromRGB(110, 100, 88), Color3.fromRGB(40, 110, 82), 8.5) -- зелёная крыша
+neighborHouse(Vector3.new(44, 0, 124), 12, 9, Color3.fromRGB(120, 118, 112), Color3.fromRGB(96, 96, 96), 7) -- серый сарай
+
+-- Чёрный кот у крыльца (cat_porch.jpg), рядом с голубой дверью
+local catModel = placeAsset("Cat", house, Vector3.new(-9.3, 0, 62.4), 200, 0.45)
+if catModel then
+	catModel.Name = "Cat"
+	for _, d in catModel:GetDescendants() do
+		if d:IsA("BasePart") then
+			d.CanCollide = false
+		elseif d:IsA("Humanoid") then
+			d.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+		end
+	end
+end
+task.wait()
 
 -- Бочки (у сарая и у дома)
 local props = folder("Props")
@@ -746,13 +972,13 @@ barrel(Vector3.new(34.3, 0, 62.5))
 barrel(Vector3.new(49.5, 0, 64.5))
 barrel(Vector3.new(27.8, 0, 66))
 barrel(Vector3.new(-28.5, 0, 82.5))
+barrel(Vector3.new(55, 0, 80.5))
 -- старая скамейка у поля, ведро, доски
 P(props, "Bench", Vector3.new(6, 0.4, 1.4), CFrame.new(-36, 1.6, 10), Color3.fromRGB(100, 80, 60), Enum.Material.Wood)
 for _, x in { -38.4, -33.6 } do
 	P(props, "BenchLeg", Vector3.new(0.4, 1.4, 1.2), CFrame.new(x, 0.7, 10), DARK_WOOD, Enum.Material.Wood)
 end
 P(props, "Bucket", Vector3.new(1.2, 1.4, 1.4), CFrame.new(51, 0.6, 62) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(110, 110, 105), Enum.Material.CorrodedMetal, Enum.PartType.Cylinder)
-P(props, "PlankPile", Vector3.new(7, 0.6, 2), CFrame.new(-30, 0.3, 92) * CFrame.Angles(0, 0.3, 0), OLD_WOOD)
 task.wait()
 
 -- Деревянный столб с фонарём у поля (единственный свет на поле)
@@ -785,11 +1011,13 @@ for i, pos in {
 	Vector3.new(-20, 1, 77), -- у задней двери
 	Vector3.new(40, 1, 72), -- сарай
 	Vector3.new(39.5, 3.7, 76.5), -- верстак
-	Vector3.new(-26, 1, 92), -- за домом у досок
+	Vector3.new(-37, 1, 93), -- огород, между грядками
+	Vector3.new(4, 1, 91), -- огород, у яблони
+	Vector3.new(-14, 1, 103), -- огород, дальний угол
 	Vector3.new(-42, 1, 30), -- двор слева
 	Vector3.new(48, 1, 30), -- двор справа
 	Vector3.new(15, 1, -85), -- за сеткой у Славика
-	Vector3.new(30, 1, 98), -- задний угол двора
+	Vector3.new(30, 1, 100), -- у трактора, за сараем
 	Vector3.new(-36, 2.4, 10), -- на скамейке
 } do
 	marker(svc, "ItemSpawn" .. i, Vector3.new(1, 1, 1), pos, "SlavikItemSpawn")
@@ -799,6 +1027,8 @@ for i, pos in {
 	Vector3.new(10, 0, 58), Vector3.new(42, 0, 60), Vector3.new(-16, 0, 102), Vector3.new(0, 0, 0),
 	Vector3.new(31, 0, -50), Vector3.new(-12, 0, 72), Vector3.new(14, 0, 72), Vector3.new(42, 0, 72),
 	Vector3.new(-40, 0, -30), Vector3.new(48, 0, 10),
+	Vector3.new(-24, 0, 97), Vector3.new(8, 0, 94), Vector3.new(-38, 0, 116), -- огород и за дырой в заборе
+	Vector3.new(30, 0, 92),
 } do
 	marker(svc, "Patrol" .. i, Vector3.new(1, 1, 1), pos, "SlavikPatrol")
 end
