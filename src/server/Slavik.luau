@@ -387,6 +387,7 @@ function Slavik.wake(map: MapBuilder.Map, ctx: Context)
 		local searchUntil = 0
 		local searchPoint: Vector3? = nil
 		local investigatePos: Vector3? = nil
+		local investigateUntil = 0
 		local patrolTarget: Vector3? = nil
 		local lastDoorHit = 0
 		local lastKnock = os.clock()
@@ -502,6 +503,7 @@ function Slavik.wake(map: MapBuilder.Map, ctx: Context)
 				if noise then
 					state = "Investigate"
 					investigatePos = noise.position
+					investigateUntil = now + Config.InvestigateTimeout
 				end
 			end
 
@@ -526,7 +528,9 @@ function Slavik.wake(map: MapBuilder.Map, ctx: Context)
 				end
 			elseif state == "Investigate" and investigatePos then
 				hum.WalkSpeed = Config.SlavikSpeed + 3
-				if flatDist(investigatePos, r.Position) < 4 then
+				-- дошёл (к центру большого предмета вроде генератора/машины не подойти вплотную)
+				-- или долго не может дойти — значит, «проверил», дальше обыскивает
+				if flatDist(investigatePos, r.Position) < Config.InvestigateArriveDistance or now > investigateUntil then
 					state = "Search"
 					searchUntil = now + Config.SearchTime
 					searchPoint = investigatePos
