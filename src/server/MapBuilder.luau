@@ -122,7 +122,10 @@ local function build(): Instance
 	fenceSegment(Vector3.new(0.3, fenceH, 37), Vector3.new(40, fenceH / 2, -76.5))
 	fenceSegment(Vector3.new(80, fenceH, 0.3), Vector3.new(0, fenceH / 2, -95))
 	for x = -40, 40, 10 do
-		part(map, "FencePole", Vector3.new(0.5, fenceH + 0.5, 0.5), CFrame.new(x, (fenceH + 0.5) / 2, -58), DARK_WOOD)
+		-- в проёме калитки (x 28..34) столба нет, иначе Славик не пролезет
+		if x < 28 or x > 34 then
+			part(map, "FencePole", Vector3.new(0.5, fenceH + 0.5, 0.5), CFrame.new(x, (fenceH + 0.5) / 2, -58), DARK_WOOD)
+		end
 	end
 	marker(map, "FenceZone", Vector3.new(80, 40, 36.5), Vector3.new(0, 20, -76.75))
 

@@ -37,6 +37,7 @@ local Config = {
 	SlavikChaseSpeed = 17, -- когда игрок рядом — ускоряется
 	SlavikChaseRadius = 25,
 	CatchDistance = 4,
+	SlavikAgentRadius = 1.5, -- «толщина» Славика для поиска пути (больше = не пролезет в калитку/дверь)
 	PathRecompute = 0.35, -- как часто пересчитывать путь (сек)
 	KnockInterval = 12, -- как часто стучит в окна, если никого не видит
 

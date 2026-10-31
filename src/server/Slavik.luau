@@ -195,7 +195,7 @@ end
 
 local function computePath(from: Vector3, to: Vector3): { PathWaypoint }?
 	local path = PathfindingService:CreatePath({
-		AgentRadius = 2,
+		AgentRadius = Config.SlavikAgentRadius,
 		AgentHeight = 6,
 		AgentCanJump = false,
 	})
