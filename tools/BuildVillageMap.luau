@@ -316,9 +316,20 @@ task.wait()
 -- 2) ПОЛЕ: ворота из ящиков, сетка-рабица, лежбище Славика
 -- ===================================================================
 local field = folder("Field")
+local crateSrc = ASSETS and ASSETS:FindFirstChild("Crate")
+local crateMesh = crateSrc and crateSrc:FindFirstChildWhichIsA("MeshPart", true)
 local function crate(pos: Vector3, rot: number)
-	local c = P(field, "Crate", Vector3.new(2.2, 2.2, 2.2), CFrame.new(pos) * CFrame.Angles(0, math.rad(rot), 0), Color3.fromRGB(128, 98, 62), Enum.Material.WoodPlanks)
-	return c
+	if crateMesh then
+		-- PBR-ящик из Creator Store
+		local c = crateMesh:Clone()
+		c.Name = "Crate"
+		c.Anchored = true
+		c.Size = Vector3.new(2.3, 2.2, 2.3)
+		c.CFrame = CFrame.new(O + pos) * CFrame.Angles(0, math.rad(rot), 0)
+		c.Parent = field
+		return c
+	end
+	return P(field, "Crate", Vector3.new(2.2, 2.2, 2.2), CFrame.new(pos) * CFrame.Angles(0, math.rad(rot), 0), Color3.fromRGB(128, 98, 62), Enum.Material.WoodPlanks)
 end
 for _, z in { 50, -50 } do
 	for _, x in { -5.5, 5.5 } do
@@ -1147,7 +1158,7 @@ for _, d in map:GetDescendants() do
 		if isWall and same(d.Color, GREEN_SIDING) and hasVariant("SlavikGreenSiding") then
 			d.Material = Enum.Material.WoodPlanks
 			d.MaterialVariant = "SlavikGreenSiding"
-			d.Color = Color3.fromRGB(196, 214, 196) -- приглушить бирюзу текстуры
+			d.Color = Color3.fromRGB(176, 196, 182) -- приглушить бирюзу текстуры
 		elseif isWall and hasVariant("SlavikBrownBoards") and d.Material == Enum.Material.WoodPlanks then
 			d.MaterialVariant = "SlavikBrownBoards"
 			d.Color = if same(d.Color, SHED_WOOD) then Color3.fromRGB(170, 160, 150) else Color3.fromRGB(190, 150, 120)
