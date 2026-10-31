@@ -257,19 +257,23 @@ end)
 local function fill(center: Vector3, size: Vector3, mat: Enum.Material)
 	T:FillBlock(CFrame.new(O + center), size, mat)
 end
-fill(Vector3.new(3, -6, 3), Vector3.new(460, 12, 460), Enum.Material.Grass)
+-- Террейн округляет по сетке 4 стада: чтобы поверхность была ровно на y = 0,
+-- верх заливки ставим на y = -2 (половина воксела -4..0 заполнена).
+-- Сначала очищаем всё выше y = -4 (на случай повторного запуска).
+fill(Vector3.new(3, 26, 3), Vector3.new(470, 60, 470), Enum.Material.Air)
+fill(Vector3.new(3, -8, 3), Vector3.new(460, 12, 460), Enum.Material.Grass)
 task.wait()
 -- поле: вытоптанная земля
-fill(Vector3.new(0, -1, 0), Vector3.new(62, 2, 106), Enum.Material.Ground)
+fill(Vector3.new(0, -3, 0), Vector3.new(62, 2, 106), Enum.Material.Ground)
 -- тропинки к дому, сараю и машине
-fill(Vector3.new(-13, -1, 59), Vector3.new(5, 2, 12), Enum.Material.Mud)
-fill(Vector3.new(10, -1, 59), Vector3.new(5, 2, 12), Enum.Material.Mud)
-fill(Vector3.new(30, -1, 62), Vector3.new(30, 2, 5), Enum.Material.Mud)
-fill(Vector3.new(-18, -1, 90), Vector3.new(6, 2, 18), Enum.Material.Mud)
+fill(Vector3.new(-13, -3, 59), Vector3.new(5, 2, 12), Enum.Material.Mud)
+fill(Vector3.new(10, -3, 59), Vector3.new(5, 2, 12), Enum.Material.Mud)
+fill(Vector3.new(30, -3, 62), Vector3.new(30, 2, 5), Enum.Material.Mud)
+fill(Vector3.new(-18, -3, 90), Vector3.new(6, 2, 18), Enum.Material.Mud)
 -- заросли у левой половины дома и вдоль заборов
-fill(Vector3.new(-20, -1, 58), Vector3.new(16, 2, 6), Enum.Material.LeafyGrass)
-fill(Vector3.new(-40, -1, 70), Vector3.new(20, 2, 40), Enum.Material.LeafyGrass)
-fill(Vector3.new(0, -1, -78), Vector3.new(76, 2, 32), Enum.Material.LeafyGrass)
+fill(Vector3.new(-20, -3, 58), Vector3.new(16, 2, 6), Enum.Material.LeafyGrass)
+fill(Vector3.new(-40, -3, 70), Vector3.new(20, 2, 40), Enum.Material.LeafyGrass)
+fill(Vector3.new(0, -3, -78), Vector3.new(76, 2, 32), Enum.Material.LeafyGrass)
 -- холмы за забором (лес вдали)
 for i = 1, 14 do
 	local a = (i / 14) * math.pi * 2
@@ -370,7 +374,7 @@ task.wait()
 -- ===================================================================
 local house = folder("House")
 local WALL_H, T_W = 10, 0.8
-local DOOR = { 0.4, 8.2 } -- низ/верх дверного проёма
+local DOOR = { 0, 8.2 } -- низ/верх дверного проёма (без порога — Славик не умеет прыгать)
 local WIN = { 3.4, 7.4 }
 -- передняя стена: левая половина (выцветшая), правая (тёмная)
 wallX(house, -26, 0, 64, WALL_H, T_W, {
