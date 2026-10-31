@@ -1,7 +1,7 @@
 --!strict
--- Побег на Ниве.
+-- Побег на тракторе.
 --   1. Найти ключи и вставить в машину.
---   2. Найти канистру и залить бензин.
+--   2. Найти канистру и залить солярку.
 --   3. Найти аккумулятор (он разряжен), отнести в сарай, поставить на генератор,
 --      завести генератор (ГРОМКО — Славик слышит), дождаться зарядки, отнести в машину.
 --   4. «Завести и уехать» — кто рядом с машиной через несколько секунд, тот спасся.
@@ -40,7 +40,7 @@ type Item = {
 
 local ITEMS = {
 	{ name = "Keys", title = "ключи", size = Vector3.new(0.8, 0.3, 1.2), color = Color3.fromRGB(220, 190, 80), material = Enum.Material.Metal },
-	{ name = "Fuel", title = "канистру", size = Vector3.new(1.4, 2, 0.9), color = Color3.fromRGB(180, 40, 30), material = Enum.Material.Metal },
+	{ name = "Fuel", title = "канистру с соляркой", size = Vector3.new(1.4, 2, 0.9), color = Color3.fromRGB(180, 40, 30), material = Enum.Material.Metal },
 	{ name = "Battery", title = "аккумулятор", size = Vector3.new(1.6, 1.2, 1), color = Color3.fromRGB(30, 30, 35), material = Enum.Material.SmoothPlastic },
 }
 
@@ -301,7 +301,7 @@ local function missingText(): string
 		table.insert(list, "ключи")
 	end
 	if not installed.Fuel then
-		table.insert(list, "бензин")
+		table.insert(list, "солярка")
 	end
 	if not installed.Battery then
 		table.insert(list, "заряженный аккумулятор")
@@ -325,12 +325,12 @@ local function onCarUse(player: Player)
 	end
 	installed[item.name] = true
 	Noise.emit(m.EscapeCar.Position, Config.CarInstallNoise)
-	local done = if item.name == "Keys" then "Ключи в замке зажигания"
-		elseif item.name == "Fuel" then "Бензин залит"
+	local done = if item.name == "Keys" then "Ключи в замке"
+		elseif item.name == "Fuel" then "Солярка залита"
 		else "Аккумулятор на месте"
 	consume(item)
 	if installed.Keys and installed.Fuel and installed.Battery then
-		say(nil, done .. ".\nНИВА ГОТОВА! Заводи и все в машину!", 4)
+		say(nil, done .. ".\nТРАКТОР ГОТОВ! Заводи, и все к нему!", 4)
 	else
 		say(nil, done .. ". " .. missingText(), 3.5)
 	end
@@ -410,7 +410,7 @@ local function onGeneratorTake(player: Player)
 	item.prompt.Enabled = true
 	pickUp(item, player)
 	if item.charged then
-		say(player, "Аккумулятор заряжен! Неси в Ниву.", 3)
+		say(player, "Аккумулятор заряжен! Неси к трактору.", 3)
 	end
 	updateState()
 end
@@ -440,7 +440,7 @@ local function onCarStart(player: Player)
 			if not active then
 				return
 			end
-			say(nil, player.Name .. " завёл Ниву! Все в машину! " .. t, 1.1)
+			say(nil, player.Name .. " завёл трактор! Все к трактору! " .. t, 1.1)
 			Noise.emit(m.EscapeCar.Position, Config.CarStartNoise)
 			task.wait(1)
 		end
@@ -457,7 +457,7 @@ local function onCarStart(player: Player)
 		end
 		if #escaped == 0 then
 			escaping = false
-			say(nil, "Никто не успел сесть в машину!", 3)
+			say(nil, "Никто не успел к трактору!", 3)
 			updateState()
 			return
 		end
@@ -467,10 +467,10 @@ end
 
 function Objectives.init(m: MapBuilder.Map)
 	map = m
-	local carP = makePrompt(m.EscapeCar, "Использовать", "Нива", Config.CarInstallHold)
+	local carP = makePrompt(m.EscapeCar, "Использовать", "Трактор", Config.CarInstallHold)
 	carP.Triggered:Connect(onCarUse)
 	carPrompt = carP
-	local startP = makePrompt(m.EscapeCar, "Завести и уехать", "Нива", Config.CarStartHold)
+	local startP = makePrompt(m.EscapeCar, "Завести и уехать", "Трактор", Config.CarStartHold)
 	startP.KeyboardKeyCode = Enum.KeyCode.F
 	startP.Triggered:Connect(onCarStart)
 	startPrompt = startP

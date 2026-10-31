@@ -354,7 +354,7 @@ local function runHorror(reason: string, waker: Player?): (string, { Player })
 	scareRemote:FireAllClients("wake")
 	task.delay(3.5, function()
 		if getPhase() == "Horror" then
-			say("БЕГИТЕ! Найдите ключи, бензин и аккумулятор\nи уезжайте на Ниве. (Q — фонарик)", 6)
+			say("БЕГИТЕ! Найдите ключи, солярку и аккумулятор\nи уезжайте на тракторе. (Q — фонарик)", 6)
 		end
 	end)
 
@@ -472,7 +472,7 @@ local function runEnd(result: string, escapedList: { Player })
 		for _, player in escapedList do
 			table.insert(names, player.Name)
 		end
-		say("ВЫ УЕХАЛИ НА НИВЕ!\nСпаслись: " .. table.concat(names, ", ") .. "\n" .. score, Config.EndScreenDuration)
+		say("ВЫ УЕХАЛИ НА ТРАКТОРЕ!\nСпаслись: " .. table.concat(names, ", ") .. "\n" .. score, Config.EndScreenDuration)
 	elseif result == "dawn" then
 		setDawn()
 		local survivors: { string } = {}

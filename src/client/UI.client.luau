@@ -149,18 +149,18 @@ local function refresh()
 		end
 		return "[  ] " .. text
 	end
-	local batteryText = "Аккумулятор → зарядить в сарае → в Ниву"
+	local batteryText = "Аккумулятор → зарядить в сарае → к трактору"
 	if not hasBattery and (generatorOn or batteryCharge > 0) then
 		batteryText = "Аккумулятор: заряд " .. batteryCharge .. "%" .. (if generatorOn then " (генератор шумит!)" else "")
 	end
 	local carrying = player:GetAttribute("Carrying")
-	local carryNames: { [string]: string } = { Keys = "ключи", Fuel = "канистра", Battery = "аккумулятор" }
+	local carryNames: { [string]: string } = { Keys = "ключи", Fuel = "солярка", Battery = "аккумулятор" }
 	local carryLine = if typeof(carrying) == "string" then "\nВ руках: " .. (carryNames[carrying] or carrying) else ""
-	objText.Text = "<b>СБЕЖАТЬ НА НИВЕ</b>\n"
-		.. line(hasKeys, "Ключи от Нивы") .. "\n"
-		.. line(hasFuel, "Канистра с бензином") .. "\n"
+	objText.Text = "<b>СБЕЖАТЬ НА ТРАКТОРЕ</b>\n"
+		.. line(hasKeys, "Ключи от трактора") .. "\n"
+		.. line(hasFuel, "Канистра с соляркой") .. "\n"
 		.. line(hasBattery, batteryText) .. "\n"
-		.. line(hasKeys and hasFuel and hasBattery, "Завести и уехать (F у машины)")
+		.. line(hasKeys and hasFuel and hasBattery, "Завести и уехать (F у трактора)")
 		.. carryLine
 
 	if phase == "Lobby" then

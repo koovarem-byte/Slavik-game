@@ -70,9 +70,9 @@ local Config = {
 	FlashlightBrightness = 3,
 	FlashlightAngle = 50,
 
-	-- ===== Побег на Ниве =====
+	-- ===== Побег на тракторе =====
 	ItemPickupHold = 0.6,
-	CarInstallHold = 3, -- вставить ключи / залить бензин / поставить аккумулятор
+	CarInstallHold = 3, -- вставить ключи / залить солярку / поставить аккумулятор
 	CarInstallNoise = 30,
 	GeneratorStartHold = 3,
 	GeneratorChargeTime = 25, -- сколько заряжается аккумулятор (генератор шумит всё это время)

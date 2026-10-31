@@ -17,7 +17,7 @@ export type Map = {
 	SpawnFence: BasePart, -- откуда стартует команда «Сетка»
 	HouseInterior: BasePart, -- невидимая зона «внутри дома»
 	HouseLight: BasePart?,
-	EscapeCar: BasePart, -- Нива
+	EscapeCar: BasePart, -- трактор (имя оставлено EscapeCar)
 	Generator: BasePart, -- генератор в сарае
 	Doors: { BasePart }, -- тег SlavikDoor
 	Closets: { BasePart }, -- тег SlavikCloset
@@ -229,7 +229,7 @@ local function build(): Instance
 	part(shed, "Generator", Vector3.new(3, 3, 2), CFrame.new(37, 1.5, 70), Color3.fromRGB(160, 50, 40), Enum.Material.Metal)
 	part(shed, "Firewood", Vector3.new(8, 4, 2), CFrame.new(34, 2, 78), Color3.fromRGB(120, 85, 50), Enum.Material.Wood)
 
-	-- ===== Нива за домом =====
+	-- ===== Транспорт для побега (в заглушке — коробка) =====
 	local car = Instance.new("Folder")
 	car.Name = "Car"
 	car.Parent = map
