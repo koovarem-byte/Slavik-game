@@ -1023,8 +1023,8 @@ for i, pos in {
 	marker(svc, "ItemSpawn" .. i, Vector3.new(1, 1, 1), pos, "SlavikItemSpawn")
 end
 for i, pos in {
-	Vector3.new(-32, 0, 72), Vector3.new(32, 0, 72), Vector3.new(0, 0, 92), Vector3.new(-13, 0, 54), -- (не у столбов веранды)
-	Vector3.new(10, 0, 58), Vector3.new(46, 0, 58), -- (не под навесом с дровами) Vector3.new(-16, 0, 102), Vector3.new(0, 0, 0),
+	Vector3.new(-32, 0, 72), Vector3.new(32, 0, 72), Vector3.new(0, 0, 92), Vector3.new(-13, 0, 54),
+	Vector3.new(10, 0, 58), Vector3.new(46, 0, 58), Vector3.new(-16, 0, 102), Vector3.new(0, 0, 0),
 	Vector3.new(31, 0, -50), Vector3.new(-12, 0, 72), Vector3.new(14, 0, 72), Vector3.new(42, 0, 72),
 	Vector3.new(-40, 0, -30), Vector3.new(48, 0, 10),
 	Vector3.new(-24, 0, 97), Vector3.new(8, 0, 94), Vector3.new(-38, 0, 116), -- огород и за дырой в заборе
