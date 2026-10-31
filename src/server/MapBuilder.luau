@@ -83,8 +83,12 @@ local function lamp(parent: Instance, pos: Vector3, range: number)
 	light.Parent = head
 end
 
+-- Заглушка строится далеко от центра мира и чуть выше,
+-- чтобы не налезать на твою сцену/террейн в Workspace
+local GRAYBOX_ORIGIN = Vector3.new(3000, 60, 0)
+
 local function build(): Instance
-	local map = Instance.new("Folder")
+	local map = Instance.new("Model")
 	map.Name = "Map"
 
 	-- Земля и поле
@@ -226,6 +230,9 @@ local function build(): Instance
 		w.Transparency = 0.85
 	end
 
+	-- Строили вокруг (0,0,0), теперь переносим всё целиком в GRAYBOX_ORIGIN
+	map.WorldPivot = CFrame.new()
+	map:PivotTo(CFrame.new(GRAYBOX_ORIGIN))
 	map.Parent = Workspace
 	return map
 end
@@ -278,7 +285,7 @@ function MapBuilder.load(): Map
 		Closets = children(folder, "Closets"),
 		PatrolPoints = children(folder, "PatrolPoints"),
 		Spectator = find(folder, "Spectator"),
-		FieldCenter = Vector3.new(0, 0, 0),
+		FieldCenter = find(folder, "BallSpawn").Position,
 		FieldHalfSize = Vector3.new(35, 0, 98),
 	}
 end

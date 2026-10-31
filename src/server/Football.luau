@@ -110,7 +110,7 @@ local function onHeartbeat()
 
 	-- Аут
 	local rel = pos - m.FieldCenter
-	local isOut = math.abs(rel.X) > m.FieldHalfSize.X or math.abs(rel.Z) > m.FieldHalfSize.Z or pos.Y < -20
+	local isOut = math.abs(rel.X) > m.FieldHalfSize.X or math.abs(rel.Z) > m.FieldHalfSize.Z or pos.Y < m.FieldCenter.Y - 20
 	if isOut then
 		local now = os.clock()
 		if not outSince then
