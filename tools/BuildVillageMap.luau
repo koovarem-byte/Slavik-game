@@ -555,7 +555,7 @@ for ix = -2, 2 do
 		dot.CanCollide = false
 	end
 end
-P(kitchen, "Basin", Vector3.new(0.7, 2, 2), CFrame.new(7.2, 3.6, 68.3) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(235, 120, 40), Enum.Material.Plastic, Enum.PartType.Cylinder)
+P(kitchen, "Basin", Vector3.new(0.7, 2, 2), CFrame.new(6.4, 3.6, 68.5) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(235, 120, 40), Enum.Material.Plastic, Enum.PartType.Cylinder)
 P(kitchen, "Stool", Vector3.new(1.6, 0.25, 1.6), CFrame.new(21.5, 2, 72.5), Color3.fromRGB(150, 90, 50), Enum.Material.Wood)
 for _, off in { Vector3.new(-0.6, 0, -0.6), Vector3.new(0.6, 0, -0.6), Vector3.new(-0.6, 0, 0.6), Vector3.new(0.6, 0, 0.6) } do
 	P(kitchen, "StoolLeg", Vector3.new(0.18, 1.9, 0.18), CFrame.new(Vector3.new(21.5, 0.95, 72.5) + off), Color3.fromRGB(150, 90, 50), Enum.Material.Wood)
@@ -1006,7 +1006,7 @@ local svc = folder("Gameplay")
 for i, pos in {
 	Vector3.new(-23.5, 2.6, 68.5), -- на кровати
 	Vector3.new(-8, 3.7, 68), -- стол слева
-	Vector3.new(8, 3.7, 68), -- стол справа
+	Vector3.new(9, 3.7, 67.8), -- стол справа (рядом с тазом)
 	Vector3.new(24, 1, 70), -- угол справа
 	Vector3.new(-20, 1, 77), -- у задней двери
 	Vector3.new(40, 1, 72), -- сарай
@@ -1023,8 +1023,8 @@ for i, pos in {
 	marker(svc, "ItemSpawn" .. i, Vector3.new(1, 1, 1), pos, "SlavikItemSpawn")
 end
 for i, pos in {
-	Vector3.new(-32, 0, 72), Vector3.new(32, 0, 72), Vector3.new(0, 0, 92), Vector3.new(-13, 0, 58),
-	Vector3.new(10, 0, 58), Vector3.new(42, 0, 60), Vector3.new(-16, 0, 102), Vector3.new(0, 0, 0),
+	Vector3.new(-32, 0, 72), Vector3.new(32, 0, 72), Vector3.new(0, 0, 92), Vector3.new(-13, 0, 54), -- (не у столбов веранды)
+	Vector3.new(10, 0, 58), Vector3.new(46, 0, 58), -- (не под навесом с дровами) Vector3.new(-16, 0, 102), Vector3.new(0, 0, 0),
 	Vector3.new(31, 0, -50), Vector3.new(-12, 0, 72), Vector3.new(14, 0, 72), Vector3.new(42, 0, 72),
 	Vector3.new(-40, 0, -30), Vector3.new(48, 0, 10),
 	Vector3.new(-24, 0, 97), Vector3.new(8, 0, 94), Vector3.new(-38, 0, 116), -- огород и за дырой в заборе
