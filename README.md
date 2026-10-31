@@ -101,6 +101,10 @@ roblox-game/
 Локация стоит в стороне от остальной сцены: центр поля в (3000, 0, 0).
 `Lighting → Technology = Future` нужно включить вручную (из скриптов это свойство не меняется).
 
+Материалы дома (зелёная обшивка, коричневые доски, шифер во мху, клеёнка) — сгенерированные
+MaterialVariant в `MaterialService` (SlavikGreenSiding, SlavikBrownBoards, SlavikMossySlate, SlavikOilcloth).
+Скриншоты до/после прохода по визуалу — `docs/screens/`.
+
 ## Звуки
 
 Вставь ID звуков из Creator Store в `Config.Sounds` (только звуки, которые разрешено использовать).
