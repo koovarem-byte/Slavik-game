@@ -66,7 +66,30 @@ local function bar(title: string, y: number, color: Color3): (Frame, Frame)
 end
 
 local angerBack, angerFill = bar("Славик спит", 92, Color3.fromRGB(200, 50, 40))
-local doorBack, doorFill = bar("Дверь", 92, Color3.fromRGB(150, 110, 70))
+
+-- Список заданий побега (слева)
+local objPanel = Instance.new("Frame")
+objPanel.Size = UDim2.fromOffset(270, 130)
+objPanel.Position = UDim2.new(0, 12, 0, 120)
+objPanel.BackgroundColor3 = Color3.fromRGB(10, 10, 14)
+objPanel.BackgroundTransparency = 0.35
+objPanel.Visible = false
+objPanel.Parent = gui
+local objCorner = Instance.new("UICorner")
+objCorner.CornerRadius = UDim.new(0, 8)
+objCorner.Parent = objPanel
+local objText = Instance.new("TextLabel")
+objText.Size = UDim2.new(1, -16, 1, -12)
+objText.Position = UDim2.fromOffset(8, 6)
+objText.BackgroundTransparency = 1
+objText.TextColor3 = Color3.fromRGB(235, 235, 235)
+objText.Font = Enum.Font.Gotham
+objText.TextSize = 15
+objText.TextXAlignment = Enum.TextXAlignment.Left
+objText.TextYAlignment = Enum.TextYAlignment.Top
+objText.RichText = true
+objText.Text = ""
+objText.Parent = objPanel
 
 -- Сообщение по центру
 local message = label(gui, UDim2.new(0.8, 0, 0, 120), UDim2.new(0.5, 0, 0.28, 0), 30)
@@ -103,8 +126,11 @@ local function refresh()
 	local sh = (state:GetAttribute("ScoreHouse") :: number?) or 0
 	local sf = (state:GetAttribute("ScoreFence") :: number?) or 0
 	local anger = (state:GetAttribute("Anger") :: number?) or 0
-	local doorHP = (state:GetAttribute("DoorHP") :: number?) or 0
-	local doorClosed = state:GetAttribute("DoorClosed") == true
+	local hasKeys = state:GetAttribute("ObjKeys") == true
+	local hasFuel = state:GetAttribute("ObjFuel") == true
+	local hasBattery = state:GetAttribute("ObjBattery") == true
+	local batteryCharge = (state:GetAttribute("BatteryCharge") :: number?) or 0
+	local generatorOn = state:GetAttribute("GeneratorRunning") == true
 
 	scoreLabel.Visible = phase == "Football" or phase == "End"
 	scoreLabel.Text = string.format("ДОМ  %d : %d  СЕТКА", sh, sf)
@@ -116,12 +142,26 @@ local function refresh()
 		angerText.Text = if anger < 50 then "Славик спит" elseif anger < 80 then "Славик ворочается..." else "СЛАВИК ВОТ-ВОТ ПРОСНЁТСЯ"
 	end
 
-	doorBack.Visible = phase == "Horror"
-	doorFill.Size = UDim2.fromScale(math.clamp(doorHP / Config.DoorMaxHP, 0, 1), 1)
-	local doorText = doorBack:FindFirstChildOfClass("TextLabel")
-	if doorText then
-		doorText.Text = if doorHP <= 0 then "Дверь выбита!" elseif doorClosed then "Дверь закрыта" else "Дверь ОТКРЫТА (E)"
+	objPanel.Visible = phase == "Horror"
+	local function line(done: boolean, text: string): string
+		if done then
+			return '<font color="#7CCB6E">[X] ' .. text .. "</font>"
+		end
+		return "[  ] " .. text
 	end
+	local batteryText = "Аккумулятор → зарядить в сарае → в Ниву"
+	if not hasBattery and (generatorOn or batteryCharge > 0) then
+		batteryText = "Аккумулятор: заряд " .. batteryCharge .. "%" .. (if generatorOn then " (генератор шумит!)" else "")
+	end
+	local carrying = player:GetAttribute("Carrying")
+	local carryNames: { [string]: string } = { Keys = "ключи", Fuel = "канистра", Battery = "аккумулятор" }
+	local carryLine = if typeof(carrying) == "string" then "\nВ руках: " .. (carryNames[carrying] or carrying) else ""
+	objText.Text = "<b>СБЕЖАТЬ НА НИВЕ</b>\n"
+		.. line(hasKeys, "Ключи от Нивы") .. "\n"
+		.. line(hasFuel, "Канистра с бензином") .. "\n"
+		.. line(hasBattery, batteryText) .. "\n"
+		.. line(hasKeys and hasFuel and hasBattery, "Завести и уехать (F у машины)")
+		.. carryLine
 
 	if phase == "Lobby" then
 		timerLabel.Text = if timeLeft > 0 then "Старт через " .. timeLeft else "Ждём игроков..."
@@ -142,7 +182,7 @@ local function refresh()
 		teamLabel.Text = if player:GetAttribute("Caught") == true
 			then "Тебя поймали. Смотри за остальными."
 			elseif player:GetAttribute("Hidden") == true then "Ты в шкафу. Не дыши..."
-			else "Закрой дверь (E), подпирай её (держи R), прячься в шкаф (E)"
+			else "Крадись (C), чтобы не шуметь. Двери: E закрыть, держи R подпереть"
 	else
 		teamLabel.Text = ""
 	end

@@ -1,8 +1,12 @@
 --!strict
--- Дом: дверь (закрыть / подпереть / сломать) и шкафы, где можно спрятаться.
+-- Дом: шкафы (тег SlavikCloset), где можно спрятаться, и проверка «игрок внутри дома».
+-- Двери теперь в модуле Doors.
+--
+-- Атрибуты игрока:
+--   Hidden      — сидит в шкафу
+--   SeenHiding  — Славик видел, как он туда залез (тогда вытащит)
 
 local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Config = require(ReplicatedStorage.Shared.Config)
@@ -12,66 +16,10 @@ local MapBuilder = require(script.Parent.MapBuilder)
 local House = {}
 
 local map: MapBuilder.Map? = nil
-local closedCF: CFrame = CFrame.new()
-local openCF: CFrame = CFrame.new()
-local closed = false
-local broken = false
-local hp = 0
-local lastRepair: { [Player]: number } = {}
-local togglePrompt: ProximityPrompt? = nil
-local repairPrompt: ProximityPrompt? = nil
-
--- Шкафы: кто где сидит
 local closetOwner: { [BasePart]: Player } = {}
 local hideStarted: { [Player]: number } = {}
 local hideCooldownUntil: { [Player]: number } = {}
 local closetPrompts: { [BasePart]: ProximityPrompt } = {}
-
-local function updateState()
-	local state = Remotes.state()
-	state:SetAttribute("DoorHP", hp)
-	state:SetAttribute("DoorClosed", closed and not broken)
-end
-
-local function updatePrompts()
-	if togglePrompt then
-		togglePrompt.Enabled = not broken
-		togglePrompt.ActionText = if closed then "Открыть дверь" else "Закрыть дверь"
-	end
-	if repairPrompt then
-		repairPrompt.Enabled = closed and not broken and hp < Config.DoorMaxHP
-	end
-end
-
-local function setDoor(isClosed: boolean)
-	local m = map
-	if not m or broken then
-		return
-	end
-	closed = isClosed
-	local tween = TweenService:Create(m.HouseDoor, TweenInfo.new(0.35), { CFrame = if closed then closedCF else openCF })
-	tween:Play()
-	updatePrompts()
-	updateState()
-end
-
-local function breakDoor()
-	local m = map
-	if not m then
-		return
-	end
-	broken = true
-	closed = false
-	hp = 0
-	-- Выбитая дверь падает внутрь и больше не мешает
-	m.HouseDoor.CanCollide = false
-	TweenService:Create(m.HouseDoor, TweenInfo.new(0.4), {
-		CFrame = closedCF * CFrame.new(0, -3.7, 3) * CFrame.Angles(math.rad(90), 0, 0),
-		Transparency = 0.3,
-	}):Play()
-	updatePrompts()
-	updateState()
-end
 
 local function getRoot(player: Player): BasePart?
 	local char = player.Character
@@ -82,37 +30,53 @@ local function getRoot(player: Player): BasePart?
 	return nil
 end
 
-function House.unhide(player: Player)
+local function closetOf(player: Player): BasePart?
 	for closet, owner in closetOwner do
 		if owner == player then
-			closetOwner[closet] = nil
-			local prompt = closetPrompts[closet]
-			if prompt then
-				prompt.ActionText = "Спрятаться"
-			end
-			local root = getRoot(player)
-			if root and player.Character then
-				root.Anchored = false
-				-- Выходим перед шкафом (со стороны комнаты, -Z)
-				player.Character:PivotTo(CFrame.new(closet.Position + Vector3.new(0, 0, -3)))
-			end
+			return closet
+		end
+	end
+	return nil
+end
+
+function House.getCloset(player: Player): BasePart?
+	return closetOf(player)
+end
+
+function House.unhide(player: Player)
+	local closet = closetOf(player)
+	if closet then
+		closetOwner[closet] = nil
+		local prompt = closetPrompts[closet]
+		if prompt then
+			prompt.ActionText = "Спрятаться"
+		end
+		local root = getRoot(player)
+		local char = player.Character
+		if root and char then
+			root.Anchored = false
+			-- выходим перед шкафом (со стороны его передней грани -Z)
+			local front = closet.CFrame * CFrame.new(0, 0, -(closet.Size.Z / 2 + 2))
+			char:PivotTo(CFrame.new(front.Position))
 		end
 	end
 	player:SetAttribute("Hidden", nil)
+	player:SetAttribute("SeenHiding", nil)
 	hideStarted[player] = nil
 	hideCooldownUntil[player] = os.clock() + Config.HideCooldown
 end
 
 local function hide(player: Player, closet: BasePart)
 	local root = getRoot(player)
-	if not root or not player.Character or player:GetAttribute("Caught") == true then
+	local char = player.Character
+	if not root or not char or player:GetAttribute("Caught") == true then
 		return
 	end
 	closetOwner[closet] = player
 	hideStarted[player] = os.clock()
 	player:SetAttribute("Hidden", true)
 	root.Anchored = true
-	player.Character:PivotTo(closet.CFrame)
+	char:PivotTo(closet.CFrame)
 	local prompt = closetPrompts[closet]
 	if prompt then
 		prompt.ActionText = "Выйти"
@@ -137,42 +101,6 @@ end
 
 function House.init(m: MapBuilder.Map)
 	map = m
-	closedCF = m.HouseDoor.CFrame
-	-- Дверь открывается внутрь дома (поворот на петле)
-	local hinge = m.DoorHinge.CFrame
-	openCF = hinge * CFrame.Angles(0, math.rad(-90), 0) * hinge:ToObjectSpace(closedCF)
-
-	local toggle = Instance.new("ProximityPrompt")
-	toggle.ObjectText = "Дверь"
-	toggle.KeyboardKeyCode = Enum.KeyCode.E
-	toggle.MaxActivationDistance = 9
-	toggle.RequiresLineOfSight = false
-	toggle.Parent = m.HouseDoor
-	toggle.Triggered:Connect(function()
-		setDoor(not closed)
-	end)
-	togglePrompt = toggle
-
-	local repair = Instance.new("ProximityPrompt")
-	repair.ObjectText = "Дверь"
-	repair.ActionText = "Подпереть дверь"
-	repair.KeyboardKeyCode = Enum.KeyCode.R
-	repair.HoldDuration = Config.DoorRepairHold
-	repair.MaxActivationDistance = 9
-	repair.RequiresLineOfSight = false
-	repair.UIOffset = Vector2.new(0, 80)
-	repair.Parent = m.HouseDoor
-	repair.Triggered:Connect(function(player)
-		local now = os.clock()
-		if (lastRepair[player] or 0) + 1 > now or broken or not closed then
-			return
-		end
-		lastRepair[player] = now
-		hp = math.min(Config.DoorMaxHP, hp + Config.DoorRepairAmount)
-		updatePrompts()
-		updateState()
-	end)
-	repairPrompt = repair
 
 	for _, closet in m.Closets do
 		local prompt = Instance.new("ProximityPrompt")
@@ -203,69 +131,32 @@ function House.init(m: MapBuilder.Map)
 	end)
 
 	Players.PlayerRemoving:Connect(function(player)
-		for closet, owner in closetOwner do
-			if owner == player then
-				closetOwner[closet] = nil
-				local prompt = closetPrompts[closet]
-				if prompt then
-					prompt.ActionText = "Спрятаться"
-				end
+		local closet = closetOf(player)
+		if closet then
+			closetOwner[closet] = nil
+			local prompt = closetPrompts[closet]
+			if prompt then
+				prompt.ActionText = "Спрятаться"
 			end
 		end
 		hideStarted[player] = nil
 		hideCooldownUntil[player] = nil
-		lastRepair[player] = nil
 	end)
-
-	House.reset()
 end
 
--- Вернуть дом в начальное состояние: дверь открыта и целая, шкафы пустые
+-- Все вылезают из шкафов
 function House.reset()
-	local m = map
-	if not m then
-		return
-	end
 	for _, player in Players:GetPlayers() do
 		if player:GetAttribute("Hidden") == true then
 			House.unhide(player)
 		end
 		hideCooldownUntil[player] = nil
 	end
-	broken = false
-	closed = false
-	hp = Config.DoorMaxHP
-	m.HouseDoor.CanCollide = true
-	m.HouseDoor.Transparency = 0
-	m.HouseDoor.CFrame = openCF
-	updatePrompts()
-	updateState()
-end
-
-function House.isClosed(): boolean
-	return closed and not broken
-end
-
-function House.damage(amount: number)
-	if not closed or broken then
-		return
-	end
-	hp -= amount
-	if hp <= 0 then
-		breakDoor()
-	else
-		updatePrompts()
-		updateState()
-	end
 end
 
 function House.isInside(pos: Vector3): boolean
 	local m = map
 	return m ~= nil and MapBuilder.inside(m.HouseInterior, pos)
-end
-
-function House.isBroken(): boolean
-	return broken
 end
 
 return House

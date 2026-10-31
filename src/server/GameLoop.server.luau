@@ -12,6 +12,10 @@ local MapBuilder = require(script.Parent.MapBuilder)
 local Football = require(script.Parent.Football)
 local House = require(script.Parent.House)
 local Slavik = require(script.Parent.Slavik)
+local Doors = require(script.Parent.Doors)
+local Noise = require(script.Parent.Noise)
+local Objectives = require(script.Parent.Objectives)
+local Flashlight = require(script.Parent.Flashlight)
 
 local state = Remotes.state()
 local messageRemote = Remotes.get("Message")
@@ -20,6 +24,25 @@ local scareRemote = Remotes.get("Scare")
 local map = MapBuilder.load()
 Football.init()
 House.init(map)
+Doors.init(map.Doors)
+Objectives.init(map)
+Flashlight.init()
+
+-- Атмосфера: цветокоррекция и мягкое свечение (делают картинку «киношнее»)
+if not Lighting:FindFirstChildOfClass("ColorCorrectionEffect") then
+	local cc = Instance.new("ColorCorrectionEffect")
+	cc.Saturation = -0.25
+	cc.Contrast = 0.12
+	cc.TintColor = Color3.fromRGB(235, 235, 255)
+	cc.Parent = Lighting
+end
+if not Lighting:FindFirstChildOfClass("BloomEffect") then
+	local bloom = Instance.new("BloomEffect")
+	bloom.Intensity = 0.6
+	bloom.Size = 30
+	bloom.Threshold = 1.6
+	bloom.Parent = Lighting
+end
 
 local TEAM_NAMES: { [string]: string } = { House = "ДОМ", Fence = "СЕТКА" }
 
@@ -144,6 +167,10 @@ local function catchPlayer(player: Player)
 	if player:GetAttribute("Caught") == true then
 		return
 	end
+	if player:GetAttribute("Hidden") == true then
+		House.unhide(player) -- вытащил из шкафа
+	end
+	Objectives.dropFor(player)
 	player:SetAttribute("Caught", true)
 	scareRemote:FireClient(player, "caught")
 	say(player.Name .. " пойман Славиком!", 3)
@@ -203,6 +230,7 @@ end
 local function runFootball(): (string, Player?)
 	setPhase("Football")
 	House.reset()
+	Doors.reset()
 	state:SetAttribute("ScoreHouse", 0)
 	state:SetAttribute("ScoreFence", 0)
 	state:SetAttribute("Anger", 0)
@@ -305,11 +333,14 @@ local function runFootball(): (string, Player?)
 	return reason, waker
 end
 
--- Возвращает "win" / "lose" / "empty"
-local function runHorror(reason: string, waker: Player?): string
+-- Возвращает результат: "escape" (уехали), "dawn" (дожили до рассвета), "lose", "empty"
+-- и список уехавших
+local function runHorror(reason: string, waker: Player?): (string, { Player })
 	setPhase("Horror")
 	setNight()
 	state:SetAttribute("Anger", 100)
+	Noise.clear()
+	Doors.reset()
 
 	if reason == "anger" then
 		if waker and waker.Parent then
@@ -321,24 +352,34 @@ local function runHorror(reason: string, waker: Player?): string
 		say("Стемнело... Славик проснулся сам.", 3)
 	end
 	scareRemote:FireAllClients("wake")
-	task.delay(3, function()
+	task.delay(3.5, function()
 		if getPhase() == "Horror" then
-			say("БЕГИТЕ В ДОМ И ЗАКРОЙТЕ ДВЕРЬ! (E)\nПродержитесь до рассвета.", 5)
+			say("БЕГИТЕ! Найдите ключи, бензин и аккумулятор\nи уезжайте на Ниве. (Q — фонарик)", 6)
 		end
 	end)
 
+	local escapedList: { Player } = {}
+	local escaped = false
+	Objectives.start({
+		onEscape = function(list: { Player })
+			escapedList = list
+			escaped = true
+		end,
+	})
+
 	Slavik.wake(map, {
-		isDoorClosed = House.isClosed,
-		onDoorHit = function()
-			House.damage(Config.DoorHitDamage)
-			for _, player in playersInsideHouse() do
-				scareRemote:FireClient(player, "doorhit")
+		onCatch = catchPlayer,
+		onDoorHit = function(door: BasePart, broke: boolean)
+			for _, player in Players:GetPlayers() do
+				local root = getRoot(player)
+				if root and (root.Position - door.Position).Magnitude < 30 then
+					scareRemote:FireClient(player, "doorhit")
+				end
 			end
-			if House.isBroken() then
-				say("ДВЕРЬ ВЫБИТА! Прячьтесь!", 3)
+			if broke then
+				say("Славик выбил дверь!", 2.5)
 			end
 		end,
-		onCatch = catchPlayer,
 		onKnock = function()
 			for _, player in playersInsideHouse() do
 				scareRemote:FireClient(player, "knock")
@@ -349,11 +390,13 @@ local function runHorror(reason: string, waker: Player?): string
 				end
 			end
 		end,
+		isInsideHouse = House.isInside,
 	})
 
 	local timeLeft = Config.SurviveDuration
 	local last = os.clock()
-	local result = "win"
+	local lastNoise = 0
+	local result = "dawn"
 	local bulb = map.HouseLight
 	local bulbLight = bulb and bulb:FindFirstChildOfClass("PointLight")
 
@@ -364,6 +407,20 @@ local function runHorror(reason: string, waker: Player?): string
 		last = now
 		state:SetAttribute("TimeLeft", math.max(0, math.ceil(timeLeft)))
 
+		-- Бег шумит (крадись — C)
+		if now - lastNoise > Config.NoiseInterval then
+			lastNoise = now
+			for _, player in Players:GetPlayers() do
+				local root = getRoot(player)
+				if root and player:GetAttribute("Caught") ~= true and player:GetAttribute("Hidden") ~= true then
+					local v = root.AssemblyLinearVelocity
+					if Vector3.new(v.X, 0, v.Z).Magnitude > Config.RunningSpeedThreshold then
+						Noise.emit(root.Position, Config.NoiseRunRadius)
+					end
+				end
+			end
+		end
+
 		-- Лампочка в доме иногда мигает
 		if bulbLight and math.random() < 0.03 then
 			bulbLight.Enabled = false
@@ -372,6 +429,10 @@ local function runHorror(reason: string, waker: Player?): string
 			end)
 		end
 
+		if escaped then
+			result = "escape"
+			break
+		end
 		local all = Players:GetPlayers()
 		if #all == 0 then
 			result = "empty"
@@ -388,22 +449,31 @@ local function runHorror(reason: string, waker: Player?): string
 			break
 		end
 		if timeLeft <= 0 then
-			result = "win"
+			result = "dawn"
 			break
 		end
 	end
 
 	Slavik.despawn()
+	Objectives.stop()
+	Flashlight.allOff()
 	if bulbLight then
 		bulbLight.Enabled = true
 	end
-	return result
+	return result, escapedList
 end
 
-local function runEnd(result: string)
+local function runEnd(result: string, escapedList: { Player })
 	setPhase("End")
 	local score = "Счёт: ДОМ " .. tostring(state:GetAttribute("ScoreHouse") or 0) .. " : " .. tostring(state:GetAttribute("ScoreFence") or 0) .. " СЕТКА"
-	if result == "win" then
+	if result == "escape" then
+		setDawn()
+		local names: { string } = {}
+		for _, player in escapedList do
+			table.insert(names, player.Name)
+		end
+		say("ВЫ УЕХАЛИ НА НИВЕ!\nСпаслись: " .. table.concat(names, ", ") .. "\n" .. score, Config.EndScreenDuration)
+	elseif result == "dawn" then
 		setDawn()
 		local survivors: { string } = {}
 		for _, player in Players:GetPlayers() do
@@ -411,16 +481,19 @@ local function runEnd(result: string)
 				table.insert(survivors, player.Name)
 			end
 		end
-		say("РАССВЕТ. Славик ушёл досыпать.\nВыжили: " .. table.concat(survivors, ", ") .. "\n" .. score, Config.EndScreenDuration)
+		say("РАССВЕТ. Славик ушёл досыпать.\nДожили: " .. table.concat(survivors, ", ") .. "\n" .. score, Config.EndScreenDuration)
 	elseif result == "lose" then
 		say("Славик поймал всех...\n" .. score, Config.EndScreenDuration)
 	end
 	task.wait(Config.EndScreenDuration)
 
 	House.reset()
+	Doors.reset()
 	for _, player in Players:GetPlayers() do
 		player:SetAttribute("Caught", nil)
 		player:SetAttribute("Hidden", nil)
+		player:SetAttribute("SeenHiding", nil)
+		player:SetAttribute("Carrying", nil)
 		player:LoadCharacter()
 	end
 end
@@ -430,8 +503,8 @@ while true do
 	runLobby()
 	local reason, waker = runFootball()
 	if #Players:GetPlayers() > 0 then
-		local result = runHorror(reason, waker)
-		runEnd(result)
+		local result, escapedList = runHorror(reason, waker)
+		runEnd(result, escapedList)
 	else
 		Slavik.despawn()
 	end

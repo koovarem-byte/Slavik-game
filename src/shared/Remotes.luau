@@ -6,15 +6,16 @@
 --   Kick    (клиент -> сервер)  сила удара 0..1
 --   Message (сервер -> клиент)  текст на экране
 --   Scare   (сервер -> клиент)  скример / тряска / звук
+--   Flashlight (клиент -> сервер) включить/выключить фонарик
 --
 -- GameState — папка с атрибутами (их видят все клиенты):
 --   Phase ("Lobby" | "Football" | "Horror" | "End"), TimeLeft, ScoreHouse, ScoreFence,
---   Anger, DoorHP, DoorClosed
+--   Anger, ObjKeys, ObjFuel, ObjBattery, BatteryCharge, GeneratorRunning
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
-local REMOTE_NAMES = { "Kick", "Message", "Scare" }
+local REMOTE_NAMES = { "Kick", "Message", "Scare", "Flashlight" }
 
 local Remotes = {}
 

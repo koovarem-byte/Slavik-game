@@ -31,23 +31,54 @@ local Config = {
 	SneakSpeed = 7, -- скорость, когда крадёшься (C / Ctrl / кнопка)
 
 	-- ===== Хоррор =====
-	SurviveDuration = 240, -- сколько надо продержаться до рассвета
-	WakeUpDelay = 4, -- сколько секунд Славик поднимается (фора, чтобы добежать до дома)
-	SlavikSpeed = 13,
-	SlavikChaseSpeed = 17, -- когда игрок рядом — ускоряется
-	SlavikChaseRadius = 25,
-	CatchDistance = 4,
+	SurviveDuration = 480, -- запасной вариант: продержались до рассвета (8 мин) = тоже победа
+	WakeUpDelay = 4, -- сколько секунд Славик поднимается (фора, чтобы убежать)
+	SlavikSpeed = 11, -- бродит / идёт на звук
+	SlavikChaseSpeed = 18, -- гонится (быстрее игрока при беге 16 — нельзя просто убегать по прямой)
 	SlavikAgentRadius = 1.5, -- «толщина» Славика для поиска пути (больше = не пролезет в калитку/дверь)
-	PathRecompute = 0.35, -- как часто пересчитывать путь (сек)
-	KnockInterval = 12, -- как часто стучит в окна, если никого не видит
+	CatchDistance = 4,
+	PathRecompute = 0.3, -- как часто пересчитывать путь (сек)
 
-	DoorMaxHP = 100,
-	DoorHitDamage = 9,
-	DoorHitInterval = 1.6,
-	DoorRepairAmount = 20,
+	-- Зрение и слух Славика
+	SightRange = 45, -- видит игрока без фонарика
+	SightRangeFlashlight = 90, -- видит игрока с включённым фонариком
+	SightAngle = 70, -- полуугол обзора в градусах (70 = конус 140°)
+	SenseRange = 9, -- так близко чует даже за спиной
+	LoseSightTime = 3, -- сколько секунд помнит, куда ты убежал
+	SearchTime = 7, -- сколько секунд обыскивает место, где потерял
+	NoiseRunRadius = 35, -- бег слышно на таком расстоянии
+	NoiseInterval = 0.5,
+	KnockInterval = 14, -- если бродит рядом с домом — стучит в окна
+
+	-- Двери
+	DoorMaxHP = 100, -- входная/задняя дверь
+	InnerDoorMaxHP = 50, -- двери внутри дома / сарая
+	DoorHitDamage = 12,
+	DoorHitInterval = 1.4,
+	DoorRepairAmount = 25,
 	DoorRepairHold = 1.5, -- сколько держать R, чтобы подпереть дверь
+	DoorSlamNoise = 25, -- хлопнул дверью — слышно на таком расстоянии
+
+	-- Шкафы
 	HideMaxTime = 25, -- дольше в шкафу не высидишь — душно
 	HideCooldown = 8,
+
+	-- Фонарик (Q)
+	FlashlightRange = 45,
+	FlashlightBrightness = 3,
+	FlashlightAngle = 50,
+
+	-- ===== Побег на Ниве =====
+	ItemPickupHold = 0.6,
+	CarInstallHold = 3, -- вставить ключи / залить бензин / поставить аккумулятор
+	CarInstallNoise = 30,
+	GeneratorStartHold = 3,
+	GeneratorChargeTime = 25, -- сколько заряжается аккумулятор (генератор шумит всё это время)
+	GeneratorNoise = 70, -- генератор слышно очень далеко
+	CarStartHold = 4,
+	CarStartNoise = 80,
+	EscapeCountdown = 6, -- сколько секунд ждём остальных после «завести»
+	EscapeRadius = 18, -- кто в этом радиусе от машины — уехал
 
 	EndScreenDuration = 10,
 
@@ -67,6 +98,18 @@ local Config = {
 		Caught = "", -- скример
 		Kick = "", -- удар по мячу
 		Ambient = "", -- фон ночью (сверчки, ветер)
+		Generator = "", -- тарахтение генератора (зациклено)
+		CarStart = "", -- машина заводится
+		Pickup = "", -- взял предмет
+	},
+
+	-- ===== Анимации Славика =====
+	-- Когда появится настоящая модель (ServerStorage.SlavikModel), вставь сюда ID анимаций.
+	SlavikAnimations = {
+		Idle = "",
+		Walk = "",
+		Run = "",
+		Attack = "",
 	},
 }
 

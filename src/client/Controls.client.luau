@@ -2,6 +2,7 @@
 -- Управление:
 --   Удар: держи ЛКМ или F и отпусти (чем дольше держишь — тем сильнее). На телефоне — кнопка «УДАР».
 --   Красться: C или Ctrl (переключатель). На телефоне — кнопка «КРАСТЬСЯ».
+--   Фонарик: Q (только ночью). На телефоне — кнопка «ФОНАРЬ».
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -14,6 +15,7 @@ local Remotes = require(Shared:WaitForChild("Remotes")) :: any
 
 local player = Players.LocalPlayer
 local kickRemote: RemoteEvent = Remotes.get("Kick")
+local flashlightRemote: RemoteEvent = Remotes.get("Flashlight")
 local state: Instance = Remotes.state()
 
 local chargeStart: number? = nil
@@ -50,6 +52,7 @@ end
 
 local kickButton = makeButton("УДАР", UDim2.new(1, -30, 1, -150), Color3.fromRGB(200, 70, 50))
 local sneakButton = makeButton("КРАСТЬСЯ", UDim2.new(1, -150, 1, -40), Color3.fromRGB(60, 60, 80))
+local flashButton = makeButton("ФОНАРЬ", UDim2.new(1, -30, 1, -270), Color3.fromRGB(150, 130, 60))
 
 -- Полоска силы удара
 local chargeBack = Instance.new("Frame")
@@ -75,7 +78,7 @@ hint.TextColor3 = Color3.fromRGB(220, 220, 220)
 hint.TextStrokeTransparency = 0.5
 hint.Font = Enum.Font.Gotham
 hint.TextSize = 14
-hint.Text = "ЛКМ / F — удар (держи для силы)   ·   C — красться"
+hint.Text = "ЛКМ / F — удар (держи для силы)   ·   C — красться   ·   Q — фонарик"
 hint.Parent = gui
 
 local isTouch = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
@@ -131,6 +134,8 @@ UserInputService.InputBegan:Connect(function(input, processed)
 		beginCharge()
 	elseif input.KeyCode == Enum.KeyCode.C or input.KeyCode == Enum.KeyCode.LeftControl then
 		toggleSneak()
+	elseif input.KeyCode == Enum.KeyCode.Q then
+		flashlightRemote:FireServer()
 	end
 end)
 
@@ -151,6 +156,9 @@ kickButton.InputEnded:Connect(function(input)
 	end
 end)
 sneakButton.Activated:Connect(toggleSneak)
+flashButton.Activated:Connect(function()
+	flashlightRemote:FireServer()
+end)
 
 RunService.RenderStepped:Connect(function()
 	if chargeStart then
@@ -161,6 +169,7 @@ end)
 local function onPhase()
 	local phase = state:GetAttribute("Phase")
 	kickButton.Visible = phase == "Football"
+	flashButton.Visible = phase == "Horror"
 	if phase ~= "Football" then
 		chargeStart = nil
 		chargeBack.Visible = false
