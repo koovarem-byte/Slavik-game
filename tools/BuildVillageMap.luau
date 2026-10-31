@@ -657,11 +657,16 @@ local function birch(idx: number, pos: Vector3, yaw: number, scale: number)
 	elseif size.X > size.Y and size.X > size.Z then
 		rotateAround(m, center, CFrame.Angles(0, 0, math.rad(90)))
 	end
-	-- крона (самая крупная деталь) должна быть выше середины, иначе переворачиваем
+	-- крона (самая «толстая» деталь: у ствола средний размер маленький) должна быть сверху
 	local crown: BasePart? = nil
+	local crownWidth = 0
 	for _, d in m:GetDescendants() do
-		if d:IsA("BasePart") and (not crown or d.Size.Magnitude > crown.Size.Magnitude) then
-			crown = d
+		if d:IsA("BasePart") then
+			local dims = { d.Size.X, d.Size.Y, d.Size.Z }
+			table.sort(dims)
+			if dims[2] > crownWidth then
+				crown, crownWidth = d, dims[2]
+			end
 		end
 	end
 	mn, mx = worldBox(m)
