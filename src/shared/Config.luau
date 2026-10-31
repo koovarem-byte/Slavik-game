@@ -88,6 +88,15 @@ local Config = {
 	EveningStart = 17.6,
 	EveningEnd = 20.3,
 	NightTime = 0.2,
+	-- Ночь в хорроре: лунный свет и туман (меньше Brightness/OutdoorAmbient = темнее)
+	NightLighting = {
+		Brightness = 0.8,
+		Ambient = Color3.fromRGB(20, 20, 30),
+		OutdoorAmbient = Color3.fromRGB(46, 52, 74),
+		FogDensity = 0.45,
+		FogColor = Color3.fromRGB(70, 78, 100),
+		Haze = 2.4,
+	},
 
 	-- ===== Звуки =====
 	-- Вставь сюда ID звуков из Creator Store (только с разрешением на использование),

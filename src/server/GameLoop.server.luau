@@ -91,13 +91,14 @@ local function setEvening(alpha: number)
 end
 
 local function setNight()
+	local night = Config.NightLighting
 	Lighting.ClockTime = Config.NightTime
-	Lighting.Brightness = 0.3
-	Lighting.Ambient = Color3.fromRGB(15, 15, 22)
-	Lighting.OutdoorAmbient = Color3.fromRGB(30, 30, 45)
-	atmosphere.Density = 0.55
-	atmosphere.Color = Color3.fromRGB(70, 75, 95)
-	atmosphere.Haze = 2.5
+	Lighting.Brightness = night.Brightness
+	Lighting.Ambient = night.Ambient
+	Lighting.OutdoorAmbient = night.OutdoorAmbient
+	atmosphere.Density = night.FogDensity
+	atmosphere.Color = night.FogColor
+	atmosphere.Haze = night.Haze
 end
 
 local function setDawn()

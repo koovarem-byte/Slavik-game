@@ -246,6 +246,22 @@ local function placeAsset(assetName: string, parent: Instance, pos: Vector3, yaw
 	return m
 end
 
+-- Модель из запасов, отмасштабированная под нужную ширину (по горизонтали)
+local widthCache: { [string]: number } = {}
+local function placeSized(assetName: string, parent: Instance, pos: Vector3, yaw: number, width: number): Model?
+	local src = ASSETS and ASSETS:FindFirstChild(assetName)
+	if not src then
+		return nil
+	end
+	local w0 = widthCache[assetName]
+	if not w0 then
+		local mn, mx = worldBox(src)
+		w0 = math.max(mx.X - mn.X, mx.Z - mn.Z)
+		widthCache[assetName] = w0
+	end
+	return placeAsset(assetName, parent, pos, yaw, width / math.max(w0, 0.01))
+end
+
 -- ===================================================================
 -- 1) ТЕРРЕЙН
 -- ===================================================================
@@ -280,6 +296,9 @@ fill(Vector3.new(-15, -3, 96), Vector3.new(74, 2, 19), Enum.Material.LeafyGrass)
 fill(Vector3.new(67, -3, 10), Vector3.new(9, 2, 250), Enum.Material.Mud) -- дорога за правым забором
 fill(Vector3.new(52, -3, 92), Vector3.new(16, 2, 18), Enum.Material.Mud) -- у ворот и трактора
 fill(Vector3.new(0, -3, 125), Vector3.new(110, 2, 30), Enum.Material.LeafyGrass) -- соседская сторона
+-- под домом и сараем — голая земля (иначе трава террейна прорастает сквозь пол)
+fill(Vector3.new(0, -3, 72), Vector3.new(54, 2, 18), Enum.Material.Ground)
+fill(Vector3.new(42, -3, 72), Vector3.new(14, 2, 14), Enum.Material.Ground)
 -- холмы за забором (лес вдали)
 for i = 1, 14 do
 	local a = (i / 14) * math.pi * 2
@@ -498,13 +517,13 @@ do
 end
 P(veranda, "Railing", Vector3.new(7, 0.25, 0.25), CFrame.new(-21.5, 3.1, 59.8), WHITE_PAINT, Enum.Material.Wood)
 -- фонарь над коричневой дверью
-local lampBox = P(house, "DoorLamp", Vector3.new(0.9, 1.1, 0.9), CFrame.new(13.4, 8.6, 63.2), Color3.fromRGB(255, 214, 150), Enum.Material.Neon)
+local lampBox = P(house, "DoorLamp", Vector3.new(0.6, 0.8, 0.6), CFrame.new(13.4, 8.6, 63.15), Color3.fromRGB(255, 176, 96), Enum.Material.Neon)
 lampBox.CanCollide = false
 local spot = Instance.new("SpotLight")
 spot.Face = Enum.NormalId.Bottom
 spot.Angle = 120
 spot.Range = 22
-spot.Brightness = 2.2
+spot.Brightness = 4
 spot.Color = WARM
 spot.Shadows = true
 spot.Parent = lampBox
@@ -541,27 +560,30 @@ P(inside, "Sofa", Vector3.new(7, 2, 3), CFrame.new(18, 1.4, 66.3), Color3.fromRG
 P(inside, "Shelf", Vector3.new(5, 6, 1.2), CFrame.new(7, 3.4, 79), DARK_WOOD, Enum.Material.Wood)
 -- кухня (kitchen.jpg): белая газовая плита с полотенцем, кастрюли, клеёнка в горошек, оранжевый таз, табурет
 local kitchen = folder("Kitchen", inside)
-P(kitchen, "GasStove", Vector3.new(2.6, 3, 2.3), CFrame.new(24.4, 1.9, 75.3), Color3.fromRGB(232, 232, 226), Enum.Material.SmoothPlastic)
-P(kitchen, "OvenGlass", Vector3.new(1.8, 1.2, 0.05), CFrame.new(24.4, 1.6, 74.12), Color3.fromRGB(30, 30, 32), Enum.Material.Glass)
-local towel = P(kitchen, "Towel", Vector3.new(0.7, 1.3, 0.06), CFrame.new(23.9, 2.3, 74.08), Color3.fromRGB(210, 120, 150), Enum.Material.Fabric)
-towel.CanCollide = false
-for i, off in { Vector3.new(-0.6, 0, -0.4), Vector3.new(0.6, 0, 0.4) } do
-	P(kitchen, "Pot", Vector3.new(0.9, 1.1, 1.1), CFrame.new(Vector3.new(24.4, 3.85, 75.3) + off) * CFrame.Angles(0, 0, math.rad(90)), if i == 1 then Color3.fromRGB(170, 160, 140) else Color3.fromRGB(40, 40, 42), Enum.Material.Metal, Enum.PartType.Cylinder)
+local stove = placeSized("GasStove", kitchen, Vector3.new(24.2, 0.4, 75.3), 90, 2.6)
+if not stove then
+	P(kitchen, "GasStove", Vector3.new(2.6, 3, 2.3), CFrame.new(24.4, 1.9, 75.3), Color3.fromRGB(232, 232, 226), Enum.Material.SmoothPlastic)
 end
-local cloth = P(kitchen, "TableCloth", Vector3.new(4.4, 0.08, 3), CFrame.new(8, 3.2, 68), Color3.fromRGB(176, 170, 128), Enum.Material.Fabric)
-for ix = -2, 2 do
-	for iz = -1, 1 do
-		local dot = P(kitchen, "PolkaDot", Vector3.new(0.05, 0.35, 0.35), CFrame.new(8 + ix * 0.85, 3.25, 68 + iz * 0.9) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(226, 222, 196), Enum.Material.SmoothPlastic, Enum.PartType.Cylinder)
-		dot.CanCollide = false
+local stoveTop = 3.6
+if stove then
+	local _, smx = worldBox(stove)
+	stoveTop = smx.Y - O.Y
+	stove.Name = "GasStove"
+end
+for i, off in { Vector3.new(-0.5, 0, -0.5), Vector3.new(0.5, 0, 0.5) } do
+	local pot = placeSized("Pot", kitchen, Vector3.new(24.2, stoveTop, 75.3) + off, rng:NextNumber(0, 360), if i == 1 then 1.3 else 1.0)
+	if not pot then
+		P(kitchen, "Pot", Vector3.new(0.9, 1.1, 1.1), CFrame.new(Vector3.new(24.4, 3.85, 75.3) + off) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(170, 160, 140), Enum.Material.Metal, Enum.PartType.Cylinder)
 	end
 end
+local cloth = P(kitchen, "TableCloth", Vector3.new(4.4, 0.08, 3), CFrame.new(8, 3.2, 68), Color3.fromRGB(230, 226, 200), Enum.Material.Fabric)
+cloth.MaterialVariant = "SlavikOilcloth" -- клеёнка в горошек (сгенерированный материал)
 P(kitchen, "Basin", Vector3.new(0.7, 2, 2), CFrame.new(6.4, 3.6, 68.5) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(235, 120, 40), Enum.Material.Plastic, Enum.PartType.Cylinder)
-P(kitchen, "Stool", Vector3.new(1.6, 0.25, 1.6), CFrame.new(21.5, 2, 72.5), Color3.fromRGB(150, 90, 50), Enum.Material.Wood)
-for _, off in { Vector3.new(-0.6, 0, -0.6), Vector3.new(0.6, 0, -0.6), Vector3.new(-0.6, 0, 0.6), Vector3.new(0.6, 0, 0.6) } do
-	P(kitchen, "StoolLeg", Vector3.new(0.18, 1.9, 0.18), CFrame.new(Vector3.new(21.5, 0.95, 72.5) + off), Color3.fromRGB(150, 90, 50), Enum.Material.Wood)
+if not placeSized("Stool", kitchen, Vector3.new(21.5, 0.4, 72.5), 10, 1.8) then
+	P(kitchen, "Stool", Vector3.new(1.6, 0.25, 1.6), CFrame.new(21.5, 2, 72.5), Color3.fromRGB(150, 90, 50), Enum.Material.Wood)
 end
 for i = 0, 1 do
-	P(kitchen, "Socket", Vector3.new(0.5, 0.5, 0.1), CFrame.new(16 + i * 0.6, 3.6, 79.55), Color3.fromRGB(235, 235, 230), Enum.Material.SmoothPlastic)
+	P(kitchen, "Socket", Vector3.new(0.5, 0.5, 0.1), CFrame.new(11 + i * 0.6, 3.2, 79.55), Color3.fromRGB(235, 235, 230), Enum.Material.SmoothPlastic)
 end
 -- шкафы, где можно спрятаться (выход — передняя грань, -Z)
 local c1 = P(inside, "ClosetLeft", Vector3.new(4, 7, 2.5), CFrame.new(-10, 3.9, 78.35), Color3.fromRGB(74, 54, 38), Enum.Material.Wood)
@@ -577,18 +599,49 @@ task.wait()
 -- Заросли у левой половины: кусты и плющ
 local bushes = folder("Overgrowth")
 local function bush(pos: Vector3, r: number)
+	-- меш-куст из Creator Store (два вида), иначе — шар-заглушка
+	local m = placeSized(if rng:NextNumber() < 0.5 then "BushMesh" else "BushMesh2", bushes, Vector3.new(pos.X, -0.3, pos.Z), rng:NextNumber(0, 360), r * 2.2)
+	if m then
+		for _, d in m:GetDescendants() do
+			if d:IsA("BasePart") then
+				d.CanCollide = false
+				d.CastShadow = r > 2
+			end
+		end
+		return m
+	end
 	local b = P(bushes, "Bush", Vector3.new(r * 2, r * 1.4, r * 2), CFrame.new(pos) * CFrame.Angles(0, rng:NextNumber(0, 6.28), 0), LEAF:Lerp(Color3.fromRGB(70, 84, 44), rng:NextNumber(0, 0.5)), Enum.Material.LeafyGrass, Enum.PartType.Ball)
 	b.CanCollide = false
 	return b
 end
-for i = 1, 14 do
+-- лопухи/папоротники (по house_front.jpg: заросли у стены и вдоль заборов)
+local function weed(parent: Instance, pos: Vector3, width: number)
+	local m = placeSized("Fern", parent, pos, rng:NextNumber(0, 360), width)
+	if m then
+		for _, d in m:GetDescendants() do
+			if d:IsA("BasePart") then
+				d.CanCollide = false
+				d.CastShadow = false
+			end
+		end
+	end
+	return m
+end
+for i = 1, 9 do
 	local x = rng:NextNumber(-27, -2)
 	if math.abs(x + 13) > 3.5 then -- не загораживать голубую дверь
-		bush(Vector3.new(x, rng:NextNumber(0.6, 1.6), rng:NextNumber(60.5, 62.8)), rng:NextNumber(1.4, 2.6))
+		bush(Vector3.new(x, 0, rng:NextNumber(60.8, 62.8)), rng:NextNumber(1.2, 2.2))
 	end
 end
-for i = 1, 10 do
-	bush(Vector3.new(rng:NextNumber(-34, -27.5), rng:NextNumber(0.8, 2), rng:NextNumber(62, 82)), rng:NextNumber(1.6, 3))
+for i = 1, 7 do
+	bush(Vector3.new(rng:NextNumber(-34, -28), 0, rng:NextNumber(62, 82)), rng:NextNumber(1.6, 2.8))
+end
+for _, pos in {
+	Vector3.new(-24, 0, 61.5), Vector3.new(-20, 0, 62.2), Vector3.new(-7, 0, 62), Vector3.new(-3, 0, 61.2),
+	Vector3.new(3, 0, 62.4), Vector3.new(15.5, 0, 62.5), Vector3.new(22, 0, 62.2), Vector3.new(25, 0, 61.4),
+	Vector3.new(-30, 0, 66), Vector3.new(-29, 0, 77), Vector3.new(27.5, 0, 70), Vector3.new(27.3, 0, 76),
+} do
+	weed(bushes, pos, rng:NextNumber(2.2, 3.4))
 end
 -- плющ на стене слева
 for i = 1, 12 do
@@ -618,26 +671,41 @@ P(shed, "WoodRoof", Vector3.new(7, 0.4, 5), CFrame.new(38.8, 6.8, 63.4) * CFrame
 for _, x in { 35.6, 42 } do
 	P(shed, "WoodPost", Vector3.new(0.5, 6.6, 0.5), CFrame.new(x, 3.3, 61.3), DARK_WOOD, Enum.Material.Wood)
 end
--- поленница: торцы брёвен смотрят на поле
+-- поленница: кучи брёвен (меш из Creator Store) в три ряда, иначе — цилиндры
 local logs = folder("Firewood", shed)
-for row = 0, 6 do
-	for col = 0, 7 do
-		local r = rng:NextNumber(0.34, 0.44)
-		local x = 36.4 + col * 0.82 + (row % 2) * 0.4 + rng:NextNumber(-0.05, 0.05)
-		if x < 42 then
-			local log = P(logs, "Log", Vector3.new(3.2, r * 2, r * 2), CFrame.new(x, 0.45 + row * 0.78, 63.6 + rng:NextNumber(-0.25, 0.25)) * CFrame.Angles(0, math.rad(90), 0) * CFrame.Angles(rng:NextNumber(0, 6.28), 0, 0), Color3.fromRGB(150, 112, 72):Lerp(Color3.fromRGB(110, 80, 50), rng:NextNumber()), Enum.Material.Wood, Enum.PartType.Cylinder)
-			log.Name = "Log"
+local logSrc = ASSETS and ASSETS:FindFirstChild("LogPile")
+if logSrc then
+	for row = 0, 2 do
+		for col = 0, 2 do
+			local m = placeSized("LogPile", logs, Vector3.new(37.3 + col * 1.95 + (row % 2) * 0.5, 0, 63.7), 90 + rng:NextNumber(-8, 8), 2.4)
+			if m then
+				local _, mx = worldBox(m)
+				-- ставим ряд на предыдущий
+				m:PivotTo(m:GetPivot() + Vector3.new(0, row * 1.45, 0))
+				for _, d in m:GetDescendants() do
+					if d:IsA("BasePart") then
+						d.CanCollide = false
+					end
+				end
+				local _ = mx
+			end
+		end
+	end
+else
+	for row = 0, 6 do
+		for col = 0, 7 do
+			local r = rng:NextNumber(0.34, 0.44)
+			local x = 36.4 + col * 0.82 + (row % 2) * 0.4 + rng:NextNumber(-0.05, 0.05)
+			if x < 42 then
+				local log = P(logs, "Log", Vector3.new(3.2, r * 2, r * 2), CFrame.new(x, 0.45 + row * 0.78, 63.6 + rng:NextNumber(-0.25, 0.25)) * CFrame.Angles(0, math.rad(90), 0) * CFrame.Angles(rng:NextNumber(0, 6.28), 0, 0), Color3.fromRGB(150, 112, 72):Lerp(Color3.fromRGB(110, 80, 50), rng:NextNumber()), Enum.Material.Wood, Enum.PartType.Cylinder)
+				log.CanCollide = false
+			end
 		end
 	end
 end
 -- одна невидимая стенка, чтобы через поленницу не проваливаться и Славик обходил её целиком
 local woodBlock = P(logs, "FirewoodCollider", Vector3.new(6, 5.6, 3.4), CFrame.new(39.2, 2.8, 63.6), Color3.new(), Enum.Material.SmoothPlastic)
 woodBlock.Transparency = 1
-for _, l in logs:GetChildren() do
-	if l.Name == "Log" then
-		(l :: BasePart).CanCollide = false
-	end
-end
 -- генератор
 local gen = P(shed, "Generator", Vector3.new(3, 2.2, 2), CFrame.new(45, 1.4, 75.5), Color3.fromRGB(150, 44, 34), Enum.Material.Metal)
 P(shed, "GeneratorFrame", Vector3.new(3.4, 0.3, 2.4), CFrame.new(45, 0.45, 75.5), Color3.fromRGB(40, 40, 40), Enum.Material.Metal)
@@ -674,27 +742,47 @@ local function fenceLine(a: Vector3, b: Vector3, gaps: { { number } }?, h: numbe
 	if cur < len then
 		table.insert(pieces, { cur, len })
 	end
+	local fenceTpl = ASSETS and ASSETS:FindFirstChild("FenceMesh")
+	local panelTpl = fenceTpl and fenceTpl:FindFirstChildWhichIsA("MeshPart", true)
 	for _, piece in pieces do
 		local s0, s1 = piece[1], piece[2]
 		local plen = s1 - s0
 		local mid = a + unit * ((s0 + s1) / 2)
-		for _, y in { H * 0.24, H * 0.76 } do
-			P(fence, "Rail", Vector3.new(plen, 0.35, 0.3), CFrame.new(mid.X, y, mid.Z) * CFrame.Angles(0, yaw, 0), DARK_WOOD, Enum.Material.Wood)
-		end
-		local n = math.max(1, math.floor(plen / 8))
-		for i = 0, n do
-			local p = a + unit * (s0 + i * plen / n)
-			P(fence, "Post", Vector3.new(0.6, H + 0.6, 0.6), CFrame.new(p.X, (H + 0.6) / 2, p.Z) * CFrame.Angles(0, yaw, 0), DARK_WOOD, Enum.Material.Wood)
-		end
-		local d = s0 + 0.6
-		while d < s1 - 0.4 do
-			if rng:NextNumber() > 0.06 then -- иногда доски нет
-				local p = a + unit * d
-				local ph = rng:NextNumber(H * 0.88, H * 1.08)
-				local tilt = if rng:NextNumber() < 0.08 then rng:NextNumber(-14, 14) else rng:NextNumber(-2, 2)
-				P(fence, "Plank", Vector3.new(0.9, ph, 0.15), CFrame.new(p.X, ph / 2, p.Z) * CFrame.Angles(0, yaw, 0) * CFrame.new(0, 0, 0.25) * CFrame.Angles(0, 0, math.rad(tilt)), GREY_WOOD:Lerp(OLD_WOOD, rng:NextNumber()), Enum.Material.WoodPlanks)
+		if panelTpl then
+			-- меш-пролёты штакетника из Creator Store + невидимая стенка для столкновений
+			local n = math.max(1, math.ceil(plen / 5.8))
+			local seg = plen / n
+			for i = 0, n - 1 do
+				local p = a + unit * (s0 + (i + 0.5) * seg)
+				local panel = panelTpl:Clone()
+				panel.Name = "FencePanel"
+				panel.Anchored = true
+				panel.CanCollide = false
+				panel.Size = Vector3.new(seg + 0.05, H * rng:NextNumber(0.96, 1.04), panelTpl.Size.Z)
+				panel.CFrame = CFrame.new(O + Vector3.new(p.X, panel.Size.Y / 2, p.Z)) * CFrame.Angles(0, yaw, 0) * CFrame.Angles(math.rad(rng:NextNumber(-2, 2)), 0, math.rad(rng:NextNumber(-1.5, 1.5)))
+				panel.Parent = fence
 			end
-			d += 1.25
+			local col = P(fence, "FenceCollider", Vector3.new(plen, H, 0.5), CFrame.new(mid.X, H / 2, mid.Z) * CFrame.Angles(0, yaw, 0), Color3.new(), Enum.Material.SmoothPlastic)
+			col.Transparency = 1
+		else
+			for _, y in { H * 0.24, H * 0.76 } do
+				P(fence, "Rail", Vector3.new(plen, 0.35, 0.3), CFrame.new(mid.X, y, mid.Z) * CFrame.Angles(0, yaw, 0), DARK_WOOD, Enum.Material.Wood)
+			end
+			local n = math.max(1, math.floor(plen / 8))
+			for i = 0, n do
+				local p = a + unit * (s0 + i * plen / n)
+				P(fence, "Post", Vector3.new(0.6, H + 0.6, 0.6), CFrame.new(p.X, (H + 0.6) / 2, p.Z) * CFrame.Angles(0, yaw, 0), DARK_WOOD, Enum.Material.Wood)
+			end
+			local d = s0 + 0.6
+			while d < s1 - 0.4 do
+				if rng:NextNumber() > 0.06 then -- иногда доски нет
+					local p = a + unit * d
+					local ph = rng:NextNumber(H * 0.88, H * 1.08)
+					local tilt = if rng:NextNumber() < 0.08 then rng:NextNumber(-14, 14) else rng:NextNumber(-2, 2)
+					P(fence, "Plank", Vector3.new(0.9, ph, 0.15), CFrame.new(p.X, ph / 2, p.Z) * CFrame.Angles(0, yaw, 0) * CFrame.new(0, 0, 0.25) * CFrame.Angles(0, 0, math.rad(tilt)), GREY_WOOD:Lerp(OLD_WOOD, rng:NextNumber()), Enum.Material.WoodPlanks)
+				end
+				d += 1.25
+			end
 		end
 	end
 end
@@ -858,35 +946,29 @@ for _, z in { 91, 95, 99 } do
 		leafy.CanCollide = false
 	end
 end
--- высокая трава кочками
-local function grassClump(pos: Vector3)
-	for i = 1, 3 do
-		local h = rng:NextNumber(2.2, 4.2)
-		local blade = P(garden, "TallGrass", Vector3.new(0.9, h, 0.15), CFrame.new(pos + Vector3.new(rng:NextNumber(-0.5, 0.5), h / 2, rng:NextNumber(-0.5, 0.5))) * CFrame.Angles(math.rad(rng:NextNumber(-12, 12)), rng:NextNumber(0, 6.28), math.rad(rng:NextNumber(-12, 12))), Color3.fromRGB(78, 104, 50):Lerp(Color3.fromRGB(128, 132, 70), rng:NextNumber()), Enum.Material.Grass)
-		blade.CanCollide = false
-		blade.CastShadow = false
-	end
-end
+-- высокая трава/сорняки: папоротники (меш) кочками
 local placed = 0
-while placed < 55 do
+while placed < 22 do
 	local x, z = rng:NextNumber(-50, 20), rng:NextNumber(88.5, 104.5)
 	local onBed = x > -46.5 and x < -27.5 and z > 89 and z < 101
 	local onPath = x > -22 and x < -14
 	if not onBed and not onPath then
-		grassClump(Vector3.new(x, 0, z))
+		weed(garden, Vector3.new(x, 0, z), rng:NextNumber(2.4, 4))
 		placed += 1
 	end
 end
 -- кусты смородины/малины с ягодами
 local function berryBush(pos: Vector3, berry: Color3)
 	local r = rng:NextNumber(1.6, 2.3)
-	local b = P(garden, "BerryBush", Vector3.new(r * 2, r * 1.5, r * 2), CFrame.new(pos + Vector3.new(0, r * 0.6, 0)), LEAF:Lerp(Color3.fromRGB(64, 92, 40), rng:NextNumber()), Enum.Material.LeafyGrass, Enum.PartType.Ball)
-	b.CanCollide = false
-	for i = 1, 9 do
+	if not bush(Vector3.new(pos.X, 0, pos.Z), r) then
+		return
+	end
+	for i = 1, 12 do
 		local a = rng:NextNumber(0, 6.28)
-		local y = rng:NextNumber(0.2, r * 1.1)
-		local berryPart = P(garden, "Berry", Vector3.new(0.32, 0.32, 0.32), CFrame.new(pos + Vector3.new(math.cos(a) * r * 0.95, y, math.sin(a) * r * 0.95)), berry, Enum.Material.SmoothPlastic, Enum.PartType.Ball)
+		local y = rng:NextNumber(0.6, r * 1.3)
+		local berryPart = P(garden, "Berry", Vector3.new(0.3, 0.3, 0.3), CFrame.new(pos + Vector3.new(math.cos(a) * r * 0.85, y, math.sin(a) * r * 0.85)), berry, Enum.Material.SmoothPlastic, Enum.PartType.Ball)
 		berryPart.CanCollide = false
+		berryPart.CastShadow = false
 	end
 end
 for i, pos in { Vector3.new(-49, 0, 90), Vector3.new(-49, 0, 97), Vector3.new(-49, 0, 103), Vector3.new(19, 0, 90), Vector3.new(16, 0, 103), Vector3.new(-26, 0, 103.5) } do
@@ -954,17 +1036,10 @@ task.wait()
 
 -- Бочки (у сарая и у дома)
 local props = folder("Props")
-local barrelSrc = ASSETS and ASSETS:FindFirstChild("Barrels")
 local function barrel(pos: Vector3)
-	if barrelSrc then
-		local b = barrelSrc:FindFirstChildWhichIsA("BasePart")
-		if b then
-			local c = b:Clone()
-			c.Anchored = true
-			c.CFrame = CFrame.new(O + pos + Vector3.new(0, c.Size.Y / 2, 0)) * CFrame.Angles(0, rng:NextNumber(0, 6.28), 0)
-			c.Parent = props
-			return
-		end
+	local m = placeSized("RustyBarrel", props, pos, rng:NextNumber(0, 360), 2.3)
+	if m then
+		return
 	end
 	P(props, "Barrel", Vector3.new(3.4, 2.4, 2.4), CFrame.new(pos + Vector3.new(0, 1.7, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(70, 60, 50), Enum.Material.CorrodedMetal, Enum.PartType.Cylinder)
 end
@@ -1055,6 +1130,35 @@ for _, info in {
 	w.Transparency = 0.85
 end
 
+-- ===================================================================
+-- 7.5) МАТЕРИАЛЫ (сгенерированные MaterialVariant в MaterialService)
+-- ===================================================================
+local MS = game:GetService("MaterialService")
+local function hasVariant(name: string): boolean
+	return MS:FindFirstChild(name, true) ~= nil
+end
+local function same(c1: Color3, c2: Color3): boolean
+	return math.abs(c1.R - c2.R) + math.abs(c1.G - c2.G) + math.abs(c1.B - c2.B) < 0.02
+end
+local SHED_WOOD = Color3.fromRGB(78, 64, 50)
+for _, d in map:GetDescendants() do
+	if d:IsA("BasePart") then
+		local isWall = d.Name == "Wall" or d.Name == "Gable" or d.Name == "NWall" or d.Name == "NGable"
+		if isWall and same(d.Color, GREEN_SIDING) and hasVariant("SlavikGreenSiding") then
+			d.Material = Enum.Material.WoodPlanks
+			d.MaterialVariant = "SlavikGreenSiding"
+			d.Color = Color3.fromRGB(196, 214, 196) -- приглушить бирюзу текстуры
+		elseif isWall and hasVariant("SlavikBrownBoards") and d.Material == Enum.Material.WoodPlanks then
+			d.MaterialVariant = "SlavikBrownBoards"
+			d.Color = if same(d.Color, SHED_WOOD) then Color3.fromRGB(170, 160, 150) else Color3.fromRGB(190, 150, 120)
+		elseif (d.Name == "Roof" or d.Name == "VerandaRoof" or d.Name == "RoofRidge") and hasVariant("SlavikMossySlate") then
+			d.Material = Enum.Material.Slate
+			d.MaterialVariant = "SlavikMossySlate"
+			d.Color = Color3.fromRGB(150, 158, 140) -- мох темнее, без желтизны
+		end
+	end
+end
+
 map.Parent = workspace
 
 -- ===================================================================
@@ -1062,14 +1166,14 @@ map.Parent = workspace
 -- ===================================================================
 local lightOk, lightErr = pcall(function()
 Lighting.ClockTime = 0.2
-Lighting.Brightness = 0.6
-Lighting.Ambient = Color3.fromRGB(16, 16, 24)
-Lighting.OutdoorAmbient = Color3.fromRGB(42, 46, 62)
+Lighting.Brightness = 0.9 -- лунный свет
+Lighting.Ambient = Color3.fromRGB(20, 20, 30)
+Lighting.OutdoorAmbient = Color3.fromRGB(52, 58, 82)
 Lighting.EnvironmentDiffuseScale = 0.4
 Lighting.EnvironmentSpecularScale = 0.6
 Lighting.GlobalShadows = true
 local atm = Lighting:FindFirstChildOfClass("Atmosphere") or Instance.new("Atmosphere")
-atm.Density = 0.45
+atm.Density = 0.4
 atm.Offset = 0.1
 atm.Color = Color3.fromRGB(80, 88, 110)
 atm.Decay = Color3.fromRGB(40, 44, 60)
