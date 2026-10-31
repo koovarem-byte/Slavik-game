@@ -571,7 +571,7 @@ P(inside, "Sofa", Vector3.new(7, 2, 3), CFrame.new(18, 1.4, 66.3), Color3.fromRG
 P(inside, "Shelf", Vector3.new(5, 6, 1.2), CFrame.new(7, 3.4, 79), DARK_WOOD, Enum.Material.Wood)
 -- кухня (kitchen.jpg): белая газовая плита с полотенцем, кастрюли, клеёнка в горошек, оранжевый таз, табурет
 local kitchen = folder("Kitchen", inside)
-local stove = placeSized("GasStove", kitchen, Vector3.new(24.2, 0.4, 75.3), 90, 2.6)
+local stove = placeSized("GasStove", kitchen, Vector3.new(24.2, 0.4, 75.3), 270, 2.6) -- дверцей духовки в комнату
 if not stove then
 	P(kitchen, "GasStove", Vector3.new(2.6, 3, 2.3), CFrame.new(24.4, 1.9, 75.3), Color3.fromRGB(232, 232, 226), Enum.Material.SmoothPlastic)
 end
@@ -688,7 +688,7 @@ local logSrc = ASSETS and ASSETS:FindFirstChild("LogPile")
 if logSrc then
 	for row = 0, 2 do
 		for col = 0, 2 do
-			local m = placeSized("LogPile", logs, Vector3.new(37.3 + col * 1.95 + (row % 2) * 0.5, 0, 63.7), 90 + rng:NextNumber(-8, 8), 2.4)
+			local m = placeSized("LogPile", logs, Vector3.new(37.3 + col * 1.95 + (row % 2) * 0.5, 0, 63.7), rng:NextNumber(-8, 8), 2.4) -- торцами к полю
 			if m then
 				local _, mx = worldBox(m)
 				-- ставим ряд на предыдущий
@@ -976,8 +976,9 @@ local function berryBush(pos: Vector3, berry: Color3)
 	end
 	for i = 1, 12 do
 		local a = rng:NextNumber(0, 6.28)
-		local y = rng:NextNumber(0.6, r * 1.3)
-		local berryPart = P(garden, "Berry", Vector3.new(0.3, 0.3, 0.3), CFrame.new(pos + Vector3.new(math.cos(a) * r * 0.85, y, math.sin(a) * r * 0.85)), berry, Enum.Material.SmoothPlastic, Enum.PartType.Ball)
+		local y = rng:NextNumber(0.5, r * 0.9)
+		local rr = r * rng:NextNumber(0.35, 0.6)
+		local berryPart = P(garden, "Berry", Vector3.new(0.3, 0.3, 0.3), CFrame.new(pos + Vector3.new(math.cos(a) * rr, y, math.sin(a) * rr)), berry, Enum.Material.SmoothPlastic, Enum.PartType.Ball)
 		berryPart.CanCollide = false
 		berryPart.CastShadow = false
 	end
