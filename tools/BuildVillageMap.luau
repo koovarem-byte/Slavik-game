@@ -184,6 +184,39 @@ local function door(parent: Instance, name: string, cf: CFrame, color: Color3, m
 	return d
 end
 
+-- Габариты модели в мировых осях (GetBoundingBox меряет в осях самой модели)
+local function worldBox(m: Instance): (Vector3, Vector3)
+	local mn = Vector3.new(math.huge, math.huge, math.huge)
+	local mx = -mn
+	for _, d in m:GetDescendants() do
+		if d:IsA("BasePart") then
+			local h = d.Size / 2
+			for _, sx in { -1, 1 } do
+				for _, sy in { -1, 1 } do
+					for _, sz in { -1, 1 } do
+						local c = d.CFrame * Vector3.new(h.X * sx, h.Y * sy, h.Z * sz)
+						mn = mn:Min(c)
+						mx = mx:Max(c)
+					end
+				end
+			end
+		end
+	end
+	return mn, mx
+end
+
+-- Повернуть модель вокруг мировой точки
+local function rotateAround(m: Model, center: Vector3, rot: CFrame)
+	m:PivotTo(CFrame.new(center) * rot * CFrame.new(-center) * m:GetPivot())
+end
+
+-- Поставить модель низом на землю в точку pos (по мировым габаритам)
+local function settle(m: Model, pos: Vector3)
+	local mn, mx = worldBox(m)
+	local c = (mn + mx) / 2
+	m:PivotTo(m:GetPivot() + (O + pos - Vector3.new(c.X, mn.Y, c.Z)))
+end
+
 -- Модель из ServerStorage._MapAssetsStaging: клон, встать «на ноги», низом на землю, в точку
 local function placeAsset(assetName: string, parent: Instance, pos: Vector3, yaw: number, scale: number?): Model?
 	local src = ASSETS and ASSETS:FindFirstChild(assetName)
@@ -204,10 +237,9 @@ local function placeAsset(assetName: string, parent: Instance, pos: Vector3, yaw
 	if scale and scale ~= 1 then
 		m:ScaleTo(m:GetScale() * scale)
 	end
-	m:PivotTo(CFrame.new(O + pos) * CFrame.Angles(0, math.rad(yaw), 0) * (m:GetPivot() - m:GetPivot().Position).Rotation)
-	local cf, size = m:GetBoundingBox()
-	local bottom = cf.Position.Y - size.Y / 2
-	m:PivotTo(m:GetPivot() + Vector3.new(O.X + pos.X - cf.Position.X, O.Y + pos.Y - bottom, O.Z + pos.Z - cf.Position.Z))
+	local mn, mx = worldBox(m)
+	rotateAround(m, (mn + mx) / 2, CFrame.Angles(0, math.rad(yaw), 0))
+	settle(m, pos)
 	m.Parent = parent
 	return m
 end
@@ -616,18 +648,33 @@ local function birch(idx: number, pos: Vector3, yaw: number, scale: number)
 			d.CanCollide = false
 		end
 	end
-	-- в паке деревья лежат на боку (высота по оси Z) — ставим вертикально
-	local _, s0 = m:GetBoundingBox()
-	if s0.Z > s0.Y * 1.3 then
-		m:PivotTo(m:GetPivot() * CFrame.Angles(math.rad(-90), 0, 0))
+	-- в паке деревья лежат на боку — ставим вертикально (по самой длинной мировой оси)
+	local mn, mx = worldBox(m)
+	local size = mx - mn
+	local center = (mn + mx) / 2
+	if size.Z > size.Y and size.Z >= size.X then
+		rotateAround(m, center, CFrame.Angles(math.rad(-90), 0, 0))
+	elseif size.X > size.Y and size.X > size.Z then
+		rotateAround(m, center, CFrame.Angles(0, 0, math.rad(90)))
+	end
+	-- крона (самая крупная деталь) должна быть выше середины, иначе переворачиваем
+	local crown: BasePart? = nil
+	for _, d in m:GetDescendants() do
+		if d:IsA("BasePart") and (not crown or d.Size.Magnitude > crown.Size.Magnitude) then
+			crown = d
+		end
+	end
+	mn, mx = worldBox(m)
+	center = (mn + mx) / 2
+	if crown and crown.Position.Y < center.Y then
+		rotateAround(m, center, CFrame.Angles(math.rad(180), 0, 0))
 	end
 	if scale ~= 1 then
 		m:ScaleTo(m:GetScale() * scale)
 	end
-	m:PivotTo(CFrame.Angles(0, math.rad(yaw), 0) * (m:GetPivot() - m:GetPivot().Position) + m:GetPivot().Position)
-	local cf, size = m:GetBoundingBox()
-	m:PivotTo(m:GetPivot() + (O + pos - Vector3.new(cf.Position.X, cf.Position.Y - size.Y / 2, cf.Position.Z)))
-	-- ствол твёрдый (самая узкая высокая деталь)
+	mn, mx = worldBox(m)
+	rotateAround(m, (mn + mx) / 2, CFrame.Angles(0, math.rad(yaw), 0))
+	settle(m, pos)
 	m.Parent = nature
 	return m
 end
