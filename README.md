@@ -88,6 +88,17 @@ roblox-game/
 - `ServerStorage.SlavikModel` — модель Славика (Humanoid + HumanoidRootPart, лучше R15). ID анимаций — в `Config.SlavikAnimations`.
 - `ServerStorage.Items.Keys / Fuel / Battery` — модели предметов (деталь или Model с PrimaryPart).
 
+### Готовая локация «Деревня» (tools/BuildVillageMap.luau)
+
+Карта по концепту (`docs/concept.png`) собирается скриптом `tools/BuildVillageMap.luau`:
+вставь его текст в Command Bar Studio (режим редактирования) и нажми Enter — старый `Workspace.Map`
+удалится и построится заново (поле, сетка-рабица, лежбище Славика, дом на две семьи, сарай с поленницей
+и генератором, берёзы, Нива, забор, террейн, ночной свет, все имена и теги).
+Меш-модели (берёзы, Нива, бочки — бесплатные из Creator Store, без скриптов) лежат в
+`ServerStorage._MapAssetsStaging`; без них скрипт ставит простые заглушки.
+Локация стоит в стороне от остальной сцены: центр поля в (3000, 0, 0).
+`Lighting → Technology = Future` нужно включить вручную (из скриптов это свойство не меняется).
+
 ## Звуки
 
 Вставь ID звуков из Creator Store в `Config.Sounds` (только звуки, которые разрешено использовать).
